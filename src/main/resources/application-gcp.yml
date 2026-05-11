@@ -1,0 +1,4 @@
+storage:
+  provider: gcp
+  bucket: ${GCP_STORAGE_BUCKET:}
+  project-id: ${GCP_PROJECT_ID:}
