@@ -1,6 +1,7 @@
 package com.arbit.app.event.controller;
 
 import com.arbit.app.common.response.ApiResponse;
+import com.arbit.app.event.dto.EventDetailResponse;
 import com.arbit.app.event.dto.EventResponse;
 import com.arbit.app.event.entity.EventStatus;
 import com.arbit.app.event.repository.EventRepository;
@@ -14,7 +15,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +31,89 @@ public class EventController {
 
     public EventController(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
+    }
+
+    @GetMapping("/{eventId}")
+    @Operation(
+            summary = "이벤트 상세 조회",
+            description = """
+                    Returns the full detail of a single event by its ID.
+                    Used when a user taps an event card to view its detail page.
+
+                    status is computed server-side from today's date:
+                    - ONGOING: startDate <= today <= endDate
+                    - UPCOMING: startDate > today
+
+                    bookmarked reflects the authenticated user's bookmark state.
+                    For unauthenticated requests, bookmarked is always false.
+                    """,
+            parameters = {
+                    @Parameter(
+                            name = "eventId",
+                            in = ParameterIn.PATH,
+                            description = "Event UUID",
+                            required = true,
+                            schema = @Schema(type = "string", format = "uuid"),
+                            example = "550e8400-e29b-41d4-a716-446655440000"
+                    )
+            },
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Event detail retrieved successfully",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = EventDetailApiResponse.class),
+                                    examples = @ExampleObject(
+                                            value = """
+                                                    {
+                                                      "success": true,
+                                                      "data": {
+                                                        "title": "Echoes of Silence",
+                                                        "category": "Media Art",
+                                                        "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
+                                                        "url": "https://example.com/events/echoes-of-silence",
+                                                        "district": "Jongno-gu",
+                                                        "venue": "Metropolitan Museum",
+                                                        "startDate": "2026-05-01",
+                                                        "endDate": "2026-06-30",
+                                                        "fee": "전석 20,000",
+                                                        "time": "10:00 ~ 18:00 (입장마감 17:30)",
+                                                        "free": false,
+                                                        "tag": ["회화", "개인전", "차분한"],
+                                                        "status": "ONGOING",
+                                                        "rating": 4.7,
+                                                        "bookmarked": true
+                                                      },
+                                                      "error": null
+                                                    }
+                                                    """
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "404",
+                            description = "Event not found",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    examples = @ExampleObject(
+                                            value = """
+                                                    {
+                                                      "success": false,
+                                                      "data": null,
+                                                      "error": {
+                                                        "code": "EVENT_NOT_FOUND",
+                                                        "message": "Event not found."
+                                                      }
+                                                    }
+                                                    """
+                                    )
+                            )
+                    )
+            }
+    )
+    public ApiResponse<EventDetailResponse> getEventDetail(@PathVariable UUID eventId) {
+        return ApiResponse.success(null);
     }
 
     @GetMapping
@@ -289,6 +375,15 @@ public class EventController {
             boolean success,
             @ArraySchema(schema = @Schema(implementation = SearchEventSwaggerItem.class))
             List<SearchEventSwaggerItem> data,
+            Object error
+    ) {
+    }
+
+    @Schema(description = "Wrapped event detail response")
+    private record EventDetailApiResponse(
+            boolean success,
+            @Schema(implementation = EventDetailResponse.class)
+            EventDetailResponse data,
             Object error
     ) {
     }
