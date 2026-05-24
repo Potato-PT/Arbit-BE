@@ -20,8 +20,16 @@ public class JwtTokenProvider {
     }
 
     public String createAccessToken(String username) {
+        return createToken(username, properties.accessTokenValidityMs());
+    }
+
+    public String createRefreshToken(String username) {
+        return createToken(username, properties.refreshTokenValidityMs());
+    }
+
+    private String createToken(String username, long validityMs) {
         Date now = new Date();
-        Date expiresAt = new Date(now.getTime() + properties.accessTokenValidityMs());
+        Date expiresAt = new Date(now.getTime() + validityMs);
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(now)

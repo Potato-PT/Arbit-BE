@@ -1,7 +1,10 @@
 package com.arbit.app.common.exception;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import java.util.Arrays;
 import com.arbit.app.common.response.ApiResponse;
 import java.util.stream.Collectors;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
@@ -17,7 +20,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = exception.getErrorCode();
         return ResponseEntity
                 .status(errorCode.status())
-                .body(ApiResponse.error(errorCode.name(), errorCode.message()));
+                .body(ApiResponse.error(errorCode.name(), exception.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -33,6 +36,29 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(ApiResponse.error(ErrorCode.INVALID_REQUEST.name(), message));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException exception) {
+        Throwable cause = exception.getCause();
+        if (cause instanceof InvalidFormatException invalidFormatException
+                && invalidFormatException.getTargetType() != null
+                && invalidFormatException.getTargetType().isEnum()) {
+            String fieldName = invalidFormatException.getPath().isEmpty()
+                    ? "unknown"
+                    : invalidFormatException.getPath().get(invalidFormatException.getPath().size() - 1).getFieldName();
+            String validValues = Arrays.stream(invalidFormatException.getTargetType().getEnumConstants())
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(", "));
+            String message = fieldName + " has an invalid enum value. Allowed values: " + validValues;
+            return ResponseEntity
+                    .badRequest()
+                    .body(ApiResponse.error(ErrorCode.INVALID_REQUEST.name(), message));
+        }
+
+        return ResponseEntity
+                .badRequest()
+                .body(ApiResponse.error(ErrorCode.INVALID_REQUEST.name(), "Request body format is invalid."));
     }
 
     @ExceptionHandler(AccessDeniedException.class)

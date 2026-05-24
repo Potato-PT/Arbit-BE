@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RecommendationRepository extends JpaRepository<Recommendation, Long> {
 
+    void deleteAllByUserId(UUID userId);
+
     @EntityGraph(attributePaths = {"event", "event.category"})
     List<Recommendation> findByUserIdOrderByMatchScoreDesc(UUID userId);
 }

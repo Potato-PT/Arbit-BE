@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -23,4 +24,9 @@ public class PreferenceKeyword extends BaseTimeEntity {
 
     @Column(nullable = false, unique = true, length = 50)
     private String value;
+
+    @Builder
+    private PreferenceKeyword(String value) {
+        this.value = value;
+    }
 }
