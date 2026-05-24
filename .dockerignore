@@ -1,0 +1,13 @@
+.git
+.github
+.gradle
+.vscode
+build
+node_modules
+out
+
+.env
+*.log
+
+src/test
+table-specification.html
