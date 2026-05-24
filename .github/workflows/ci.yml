@@ -16,3 +16,5 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
       - run: sh ./gradlew build --no-daemon
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}

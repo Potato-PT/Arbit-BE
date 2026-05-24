@@ -47,7 +47,7 @@ public class HomeController {
                                                         "recommendedEvents": [
                                                           {
                                                             "event": {
-                                                              "id": 1,
+                                                              "id": "11111111-1111-1111-1111-111111111111",
                                                               "title": "Echoes of Silence",
                                                               "category": "Media Art",
                                                               "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
@@ -56,8 +56,7 @@ public class HomeController {
                                                               "startDate": "2026-05-01",
                                                               "endDate": "2026-06-30",
                                                               "free": false,
-                                                              "status": "ONGOING",
-                                                              "averageRating": 4.7
+                                                              "status": "ONGOING"
                                                             }
                                                           }
                                                         ]
