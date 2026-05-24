@@ -3,13 +3,9 @@ package com.arbit.app.user.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Schema(description = "My bookmark item")
 public record MyBookmarkResponse(
-        @Schema(description = "Event ID", example = "1")
-        UUID eventId,
-
         @Schema(description = "Event title", example = "Light Museum Seoul")
         String title,
 

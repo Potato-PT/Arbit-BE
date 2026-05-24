@@ -178,7 +178,6 @@ public class UserMeController {
                                                       "success": true,
                                                       "data": [
                                                         {
-                                                          "eventId": 1,
                                                           "title": "Echoes of Silence",
                                                           "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
                                                           "category": "Media Art",

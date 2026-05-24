@@ -140,7 +140,6 @@ public class UserMeService {
 
     private MyBookmarkResponse toBookmarkResponse(Bookmark bookmark) {
         return new MyBookmarkResponse(
-                bookmark.getEvent().getId(),
                 bookmark.getEvent().getTitle(),
                 bookmark.getEvent().getPosterImageUrl(),
                 bookmark.getEvent().getCategory().getName(),

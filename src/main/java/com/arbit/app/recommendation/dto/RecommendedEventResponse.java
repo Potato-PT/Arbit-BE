@@ -3,14 +3,11 @@ package com.arbit.app.recommendation.dto;
 import com.arbit.app.event.entity.Event;
 import com.arbit.app.event.entity.EventStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.UUID;
 
 @Schema(description = "Recommended event summary response")
 public record RecommendedEventResponse(
-        @Schema(description = "Event ID", example = "11111111-1111-1111-1111-111111111111")
-        UUID id,
-
         @Schema(description = "Event title", example = "Echoes of Silence")
         String title,
 
@@ -36,12 +33,17 @@ public record RecommendedEventResponse(
         boolean free,
 
         @Schema(description = "Event status", example = "ONGOING")
-        EventStatus status
+        EventStatus status,
+
+        @Schema(description = "Recommendation match score for this event", example = "97.50")
+        BigDecimal matchScore,
+
+        @Schema(description = "Whether the authenticated user bookmarked this event", example = "true")
+        boolean bookmarked
 ) {
 
-    public static RecommendedEventResponse from(Event event) {
+    public static RecommendedEventResponse from(Event event, BigDecimal matchScore, boolean bookmarked) {
         return new RecommendedEventResponse(
-                event.getId(),
                 event.getTitle(),
                 event.getCategory().getName(),
                 event.getPosterImageUrl(),
@@ -50,7 +52,9 @@ public record RecommendedEventResponse(
                 event.getStartDate(),
                 event.getEndDate(),
                 event.isFree(),
-                event.getStatus()
+                event.getStatus(),
+                matchScore,
+                bookmarked
         );
     }
 }
