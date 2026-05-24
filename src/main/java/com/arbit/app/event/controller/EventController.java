@@ -71,10 +71,7 @@ public class EventController {
                             in = ParameterIn.QUERY,
                             description = "Borough-level region. Multiple values allowed by repeating the query parameter.",
                             array = @ArraySchema(schema = @Schema(type = "string")),
-                            examples = {
-                                    @ExampleObject(name = "single", value = "Mapo-gu"),
-                                    @ExampleObject(name = "multi", value = "[\"Mapo-gu\", \"Jongno-gu\"]")
-                            }
+                            examples = @ExampleObject(name = "multi", value = "[\"Mapo-gu\", \"Jongno-gu\"]")
                     ),
                     @Parameter(
                             name = "startDate",
@@ -196,30 +193,21 @@ public class EventController {
                             in = ParameterIn.QUERY,
                             description = "Borough-level region. Multiple values allowed by repeating the query parameter.",
                             array = @ArraySchema(schema = @Schema(type = "string")),
-                            examples = {
-                                    @ExampleObject(name = "single", value = "Mapo-gu"),
-                                    @ExampleObject(name = "multi", value = "[\"Mapo-gu\", \"Jongno-gu\"]")
-                            }
+                            examples = @ExampleObject(name = "multi", value = "[\"Mapo-gu\", \"Jongno-gu\"]")
                     ),
                     @Parameter(
                             name = "status",
                             in = ParameterIn.QUERY,
                             description = "Allowed values: ONGOING or UPCOMING. Multiple values allowed by repeating the query parameter.",
                             array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"ONGOING", "UPCOMING"})),
-                            examples = {
-                                    @ExampleObject(name = "single", value = "ONGOING"),
-                                    @ExampleObject(name = "multi", value = "[\"ONGOING\", \"UPCOMING\"]")
-                            }
+                            examples = @ExampleObject(name = "multi", value = "[\"ONGOING\", \"UPCOMING\"]")
                     ),
                     @Parameter(
                             name = "free",
                             in = ParameterIn.QUERY,
                             description = "true for free events, false for paid. Multiple values allowed by repeating the query parameter.",
                             array = @ArraySchema(schema = @Schema(type = "boolean")),
-                            examples = {
-                                    @ExampleObject(name = "freeOnly", value = "true"),
-                                    @ExampleObject(name = "both", value = "[true, false]")
-                            }
+                            examples = @ExampleObject(name = "multi", value = "[true, false]")
                     ),
                     @Parameter(
                             name = "sort",

@@ -12,12 +12,11 @@ concurrency:
 permissions:
   contents: read
   id-token: write
-  
+
 jobs:
   deploy:
     name: Build And Upload Jar
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout
@@ -55,7 +54,6 @@ jobs:
     name: Restart Application
     runs-on: ubuntu-latest
     needs: deploy
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Restart Application
@@ -72,7 +70,8 @@ jobs:
           username: ${{ vars.GCP_USERNAME }}
           key: ${{ secrets.GCP_SSH_KEY }}
           port: ${{ vars.GCP_PORT || 22 }}
-          envs: APP_DIR,SERVER_PORT,DB_URL,DB_USERNAME,JWT_SECRET,JWT_ACCESS_TOKEN_VALIDITY_MS,JWT_REFRESH_TOKEN_VALIDITY_MS,KAKAO_REST_API_KEY,KAKAO_LOCAL_BASE_URL,AWS_S3_BUCKET,AWS_REGION
+          command_timeout: 5m        # ← 명시적으로 설정
+          envs: APP_DIR,SERVER_PORT,DB_URL,DB_USERNAME,JWT_SECRET,KAKAO_REST_API_KEY
           script_stop: true
           script: |
             set -eu
@@ -101,6 +100,8 @@ jobs:
             fi
 
             nohup java -jar app.jar > app.log 2>&1 &
+            disown $!               # ← SSH 세션 종료 시 프로세스 분리 (핵심)
+
             sleep 15
 
             if ! pgrep -f "java -jar .*app.jar" >/dev/null 2>&1; then
@@ -108,3 +109,5 @@ jobs:
               tail -n 100 app.log || true
               exit 1
             fi
+
+            echo "Application started successfully."
