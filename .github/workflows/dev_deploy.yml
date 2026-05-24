@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: GCP-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
