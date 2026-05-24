@@ -163,7 +163,7 @@ public class UserMeController {
 
     @GetMapping("/bookmarks")
     @Operation(
-            summary = "My Favorite List",
+            summary = "My bookmark list",
             description = "Returns the current user's bookmarked events in default-tab order.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -171,14 +171,14 @@ public class UserMeController {
                             description = "Bookmark list retrieved successfully",
                             content = @Content(
                                     mediaType = "application/json",
-                                    array = @ArraySchema(schema = @Schema(implementation = MyBookmarkResponse.class)),
+                                    schema = @Schema(implementation = MyBookmarksApiResponse.class),
                                     examples = @ExampleObject(
                                             value = """
                                                     {
                                                       "success": true,
                                                       "data": [
                                                         {
-                                                          "eventId": "1",
+                                                          "eventId": "9f3a2d3c-e0a0-4d14-bced-8f1b9c0fa111",
                                                           "title": "Echoes of Silence",
                                                           "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
                                                           "category": "Media Art",
@@ -274,6 +274,15 @@ public class UserMeController {
     private record ProfileImageUploadRequest(
             @Schema(type = "string", format = "binary", description = "Profile image file")
             MultipartFile profileImage
+    ) {
+    }
+
+    @Schema(description = "Wrapped bookmark list response")
+    private record MyBookmarksApiResponse(
+            boolean success,
+            @ArraySchema(schema = @Schema(implementation = MyBookmarkResponse.class))
+            List<MyBookmarkResponse> data,
+            Object error
     ) {
     }
 }

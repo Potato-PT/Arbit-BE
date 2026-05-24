@@ -8,12 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
-@Schema(description = "Initial preference save request")
+@Schema(description = "Choose-preferences request")
 public record CreatePreferenceRequest(
         @NotNull
         @NotEmpty
         @Valid
-        @Schema(description = "Selected categories and subcategories")
+        @Schema(description = "Selected categories and subcategories for choose preferences")
         List<Keyword1Item> keyword1,
 
         @NotNull
@@ -29,7 +29,7 @@ public record CreatePreferenceRequest(
         List<@NotBlank @Size(max = 50) String> keyword4
 ) {
 
-    @Schema(description = "Category selection item")
+    @Schema(description = "Choose-preferences category selection item")
     public record Keyword1Item(
             @NotBlank
             @Size(max = 50)

@@ -2,6 +2,7 @@ spring:
   application:
     name: arbit
   config:
+    # Load local developer secrets from the project root .env file.
     import: optional:file:.env[.properties]
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/arbitdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
@@ -28,6 +29,7 @@ jwt:
 kakao:
   local:
     base-url: ${KAKAO_LOCAL_BASE_URL:https://dapi.kakao.com}
+    # Read the Kakao REST API key from the local .env file or process environment.
     rest-api-key: ${KAKAO_REST_API_KEY:}
 
 server:

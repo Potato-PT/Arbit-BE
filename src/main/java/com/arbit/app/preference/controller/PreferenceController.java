@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@Tag(name = "Preferences", description = "Preference metadata APIs.")
+@Tag(name = "Choose Preferences", description = "APIs for choosing categories and taste keywords.")
 public class PreferenceController {
 
     private final PreferenceService preferenceService;
@@ -30,12 +30,12 @@ public class PreferenceController {
 
     @GetMapping("/api/preferences/categories")
     @Operation(
-            summary = "Get preference categories",
-            description = "Returns the fixed category, mood, and audience options used for preference selection.",
+            summary = "Get choose-preferences options",
+            description = "Returns the fixed category, mood, and audience options used when the user chooses preferences.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "Preference categories retrieved successfully",
+                            description = "Choose-preferences options retrieved successfully",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = PreferenceCategoriesApiResponse.class),
@@ -108,8 +108,8 @@ public class PreferenceController {
     @PostMapping("/api/preferences")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
-            summary = "Save initial preferences",
-            description = "Stores the authenticated user's initial categories and preference keywords after signup.",
+            summary = "Choose preferences",
+            description = "Stores the authenticated user's selected categories and taste keywords after signup.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
@@ -139,7 +139,7 @@ public class PreferenceController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "Preferences saved successfully",
+                            description = "Choose-preferences selections saved successfully",
                             content = @Content(
                                     mediaType = "application/json",
                                     examples = @ExampleObject(

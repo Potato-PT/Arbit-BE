@@ -3,7 +3,7 @@ package com.arbit.app.preference.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
-@Schema(description = "Preference category selection response")
+@Schema(description = "Choose-preferences options response")
 public record PreferenceCategoriesResponse(
         @Schema(description = "Primary category groups")
         List<PreferenceCategoryGroup> keyword1,
@@ -15,7 +15,7 @@ public record PreferenceCategoriesResponse(
         List<String> keyword3
 ) {
 
-    @Schema(description = "Primary category group")
+    @Schema(description = "Choose-preferences primary category group")
     public record PreferenceCategoryGroup(
             @Schema(description = "Category name", example = "전시/미술")
             String category,
