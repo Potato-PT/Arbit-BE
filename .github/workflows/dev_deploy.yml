@@ -2,14 +2,17 @@ name: GCP Deploy
 
 on:
   push:
-    branches:
-      - GCPelop
+    branches: [main, develop]
   workflow_dispatch:
 
 concurrency:
   group: GCP-deploy
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  id-token: write
+  
 jobs:
   deploy:
     name: Deploy To GCP Server
@@ -38,32 +41,28 @@ jobs:
       - name: Upload Jar To Server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.GCP_HOST }}
-          username: ${{ secrets.GCP_USERNAME }}
+          host: ${{ vars.GCP_HOST }}
+          username: ${{ vars.GCP_USERNAME }}
           key: ${{ secrets.GCP_SSH_KEY }}
-          port: ${{ secrets.GCP_PORT || 22 }}
+          port: ${{ vars.GCP_PORT || 22 }}
           source: "build/libs/*.jar"
-          target: ${{ secrets.GCP_APP_DIR }}
+          target: ${{ vars.GCP_APP_DIR }}
           strip_components: 1
 
       - name: Restart Application
         uses: appleboy/ssh-action@v1.0.3
         env:
-          APP_DIR: ${{ secrets.GCP_APP_DIR }}
-          SPRING_PROFILES_ACTIVE: ${{ secrets.GCP_SPRING_PROFILE }}
-          SERVER_PORT: ${{ secrets.GCP_SERVER_PORT }}
+          APP_DIR: ${{ vars.GCP_APP_DIR }}
+          SERVER_PORT: ${{ vars.GCP_SERVER_PORT || 3306 }}
           DB_URL: ${{ secrets.GCP_DB_URL }}
-          DB_USERNAME: ${{ secrets.GCP_DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+          DB_USERNAME: ${{ vars.GCP_DB_USERNAME }}
           JWT_SECRET: ${{ secrets.GCP_JWT_SECRET }}
-          GCP_STORAGE_BUCKET: ${{ secrets.GCP_GCP_STORAGE_BUCKET }}
-          GCP_PROJECT_ID: ${{ secrets.GCP_GCP_PROJECT_ID }}
         with:
-          host: ${{ secrets.GCP_HOST }}
-          username: ${{ secrets.GCP_USERNAME }}
+          host: ${{ vars.GCP_HOST }}
+          username: ${{ vars.GCP_USERNAME }}
           key: ${{ secrets.GCP_SSH_KEY }}
-          port: ${{ secrets.GCP_PORT || 22 }}
-          envs: APP_DIR,SPRING_PROFILES_ACTIVE,SERVER_PORT,DB_URL,DB_USERNAME,DB_PASSWORD,JWT_SECRET,JWT_ACCESS_TOKEN_VALIDITY_MS,JWT_REFRESH_TOKEN_VALIDITY_MS,KAKAO_REST_API_KEY,KAKAO_LOCAL_BASE_URL,AWS_S3_BUCKET,AWS_REGION,GCP_STORAGE_BUCKET,GCP_PROJECT_ID
+          port: ${{ vars.GCP_PORT || 22 }}
+          envs: APP_DIR,SERVER_PORT,DB_URL,DB_USERNAME,JWT_SECRET,JWT_ACCESS_TOKEN_VALIDITY_MS,JWT_REFRESH_TOKEN_VALIDITY_MS,KAKAO_REST_API_KEY,KAKAO_LOCAL_BASE_URL,AWS_S3_BUCKET,AWS_REGION
           script_stop: true
           script: |
             set -eu
@@ -79,17 +78,13 @@ jobs:
             mv "$LATEST_JAR" app.jar
 
             cat > .env <<EOF
-            SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
             SERVER_PORT=${SERVER_PORT}
             DB_URL=${DB_URL}
             DB_USERNAME=${DB_USERNAME}
-            DB_PASSWORD=${DB_PASSWORD}
             JWT_SECRET=${JWT_SECRET}
-            GCP_STORAGE_BUCKET=${GCP_STORAGE_BUCKET}
-            GCP_PROJECT_ID=${GCP_PROJECT_ID}
             EOF
 
-            if pgrep -f "java -jar .*app.jar" >/GCP/null 2>&1; then
+            if pgrep -f "java -jar .*app.jar" >/dev/null 2>&1; then
               pkill -f "java -jar .*app.jar"
               sleep 5
             fi
@@ -97,7 +92,7 @@ jobs:
             nohup java -jar app.jar > app.log 2>&1 &
             sleep 15
 
-            if ! pgrep -f "java -jar .*app.jar" >/GCP/null 2>&1; then
+            if ! pgrep -f "java -jar .*app.jar" >/dev/null 2>&1; then
               echo "Application failed to start."
               tail -n 100 app.log || true
               exit 1

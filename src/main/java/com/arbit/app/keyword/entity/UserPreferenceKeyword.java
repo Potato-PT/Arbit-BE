@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -34,4 +35,10 @@ public class UserPreferenceKeyword extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "preference_keyword_id", nullable = false)
     private PreferenceKeyword preferenceKeyword;
+
+    @Builder
+    private UserPreferenceKeyword(User user, PreferenceKeyword preferenceKeyword) {
+        this.user = user;
+        this.preferenceKeyword = preferenceKeyword;
+    }
 }

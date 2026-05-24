@@ -1,8 +1,6 @@
 spring:
   application:
     name: arbit
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:gcp}
   config:
     import: optional:file:.env[.properties]
   datasource:

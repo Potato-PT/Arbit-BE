@@ -4,8 +4,6 @@ services:
     container_name: arbitdb
     environment:
       MYSQL_DATABASE: arbitdb
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
       MYSQL_ROOT_PASSWORD: root
       TZ: Asia/Seoul
     ports:
