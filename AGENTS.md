@@ -35,7 +35,7 @@ Main features include:
 - Spring Security + JWT
 - Lombok
 - Docker Compose
-- AWS S3 / Google Cloud Storage
+- Google Cloud Storage
 
 ---
 
@@ -250,20 +250,6 @@ Filtering:
 
 Storage implementation must remain profile-specific.
 
-Use:
-
-```java
-@Profile("aws")
-```
-
-for:
-
-```text
-S3StorageService
-```
-
-Use:
-
 ```java
 @Profile("gcp")
 ```
@@ -337,7 +323,6 @@ docker-compose.yml
 .gitignore
 .github/workflows/ci.yml
 src/main/resources/application.yml
-src/main/resources/application-aws.yml
 src/main/resources/application-gcp.yml
 ```
 
@@ -395,12 +380,6 @@ for local secrets.
 Profile selection:
 
 ```text
-SPRING_PROFILES_ACTIVE=aws
-```
-
-or:
-
-```text
 SPRING_PROFILES_ACTIVE=gcp
 ```
 
@@ -416,6 +395,15 @@ SPRING_PROFILES_ACTIVE=gcp
 - Use descriptive method names
 - Avoid hardcoded strings
 - Extract constants when repeated
+
+---
+
+# Agent Workflow Rules
+
+- When asked to develop a feature, write the Swagger/OpenAPI code first.
+- After writing the Swagger/OpenAPI code, verify that the request and response values match the user's intended contract before moving on.
+- When given an instruction equivalent to "Fix the error by reading the log after execution", run and inspect logs up to three times while attempting fixes.
+- If it still fails after the third execution attempt, stop retrying and briefly explain why the last attempt did not work.
 
 ---
 

@@ -11,3 +11,4 @@ out/
 .vscode/
 
 src/main/resources/application-local.yml
+node_modules/*

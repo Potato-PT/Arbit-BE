@@ -1,4 +1,0 @@
-storage:
-  provider: aws
-  bucket: ${AWS_S3_BUCKET:}
-  region: ${AWS_REGION:ap-northeast-2}

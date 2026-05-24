@@ -32,16 +32,50 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String nickname;
 
+    @Column(length = 1000)
+    private String profileImageUrl;
+
+    @Column(nullable = false)
+    private Integer age;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private UserRole role;
+    @Column(length = 20)
+    private UserGender gender;
+
+    @Column(nullable = false, length = 255)
+    private String residentialArea;
+
+    @Column()
+    private Double residentialLatitude;
+
+    @Column()
+    private Double residentialLongitude;
+
+    // @Enumerated(EnumType.STRING)
+    // @Column(nullable = false, length = 20)
+    // private UserRole role;
 
     @Builder
-    private User(String username, String password, String nickname, UserRole role) {
+    private User(String username, String password, String nickname, String profileImageUrl, Integer age, UserGender gender,
+                 String residentialArea, Double residentialLatitude, Double residentialLongitude) {
         this.id = UUID.randomUUID();
         this.username = username;
         this.password = password;
         this.nickname = nickname;
-        this.role = role == null ? UserRole.USER : role;
+        this.profileImageUrl = profileImageUrl;
+        this.age = age;
+        this.gender = gender;
+        this.residentialArea = residentialArea;
+        this.residentialLatitude = residentialLatitude;
+        this.residentialLongitude = residentialLongitude;
+        // this.role = role == null ? UserRole.OTHER : role;
+    }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

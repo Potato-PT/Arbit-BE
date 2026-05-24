@@ -1,8 +1,8 @@
 package com.arbit.app.auth.dto;
 
-public record AuthResponse(String accessToken, String tokenType) {
+public record AuthResponse(String accessToken, String refreshToken) {
 
-    public static AuthResponse bearer(String accessToken) {
-        return new AuthResponse(accessToken, "Bearer");
+    public static AuthResponse of(String accessToken, String refreshToken) {
+        return new AuthResponse(accessToken, refreshToken);
     }
 }
