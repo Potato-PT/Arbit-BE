@@ -47,7 +47,7 @@ jobs:
           port: ${{ vars.GCP_PORT || 22 }}
           source: "build/libs/*.jar"
           target: ${{ vars.GCP_APP_DIR }}
-          strip_components: 1
+          strip_components: 2
 
       - name: Restart Application
         uses: appleboy/ssh-action@v1.0.3

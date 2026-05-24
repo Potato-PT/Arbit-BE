@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Schema(description = "My bookmark item")
 public record MyBookmarkResponse(
-        @Schema(description = "Event ID")
+        @Schema(description = "Event ID", example = "1")
         UUID eventId,
 
         @Schema(description = "Event title", example = "Light Museum Seoul")

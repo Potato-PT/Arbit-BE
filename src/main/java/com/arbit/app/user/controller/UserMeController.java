@@ -31,7 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users/me")
-@Tag(name = "My Page", description = "Profile, bookmark, and review APIs for the authenticated user.")
+@Tag(name = "마이페이지", description = "Profile, bookmark, and review APIs for the authenticated user.")
 @SecurityRequirement(name = "bearerAuth")
 public class UserMeController {
 
@@ -178,7 +178,7 @@ public class UserMeController {
                                                       "success": true,
                                                       "data": [
                                                         {
-                                                          "eventId": "9f3a2d3c-e0a0-4d14-bced-8f1b9c0fa111",
+                                                          "eventId": 1,
                                                           "title": "Echoes of Silence",
                                                           "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
                                                           "category": "Media Art",
