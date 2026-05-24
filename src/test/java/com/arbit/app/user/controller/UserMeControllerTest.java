@@ -159,9 +159,7 @@ class UserMeControllerTest {
 
     @Test
     void getMyBookmarksReturnsBookmarkList() throws Exception {
-        UUID eventId = UUID.fromString("22222222-2222-2222-2222-222222222222");
         List<MyBookmarkResponse> response = List.of(new MyBookmarkResponse(
-                eventId,
                 "Echoes of Silence",
                 "https://cdn.arbit.app/events/light-museum/poster.jpg",
                 "Media Art",
@@ -176,7 +174,6 @@ class UserMeControllerTest {
                         .principal(authenticatedUser()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].eventId").value(eventId.toString()))
                 .andExpect(jsonPath("$.data[0].title").value("Echoes of Silence"))
                 .andExpect(jsonPath("$.data[0].category").value("Media Art"))
                 .andExpect(jsonPath("$.data[0].bookmarkedAt").value("2026-05-20T18:30:00"));
