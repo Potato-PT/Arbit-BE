@@ -15,7 +15,7 @@ permissions:
   
 jobs:
   deploy:
-    name: Deploy To GCP Server
+    name: Build And Upload Jar
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
@@ -51,11 +51,18 @@ jobs:
           target: ${{ vars.GCP_APP_DIR }}
           strip_components: 2
 
+  restart:
+    name: Restart Application
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
       - name: Restart Application
         uses: appleboy/ssh-action@v1.0.3
         env:
           APP_DIR: ${{ vars.GCP_APP_DIR }}
-          SERVER_PORT: ${{ vars.GCP_SERVER_PORT || 3306 }}
+          SERVER_PORT: ${{ vars.GCP_SERVER_PORT || 8080 }}
           DB_URL: ${{ secrets.GCP_DB_URL }}
           DB_USERNAME: ${{ vars.GCP_DB_USERNAME }}
           JWT_SECRET: ${{ secrets.GCP_JWT_SECRET }}
