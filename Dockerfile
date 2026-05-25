@@ -1,16 +1,3 @@
-FROM eclipse-temurin:17-jdk AS builder
-
-WORKDIR /workspace
-
-COPY gradlew .
-COPY gradle gradle
-COPY build.gradle settings.gradle ./
-RUN chmod +x gradlew
-
-COPY src src
-
-RUN ./gradlew bootJar --no-daemon
-
 FROM eclipse-temurin:17-jre
 
 WORKDIR /app
@@ -21,7 +8,7 @@ ENV STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
 
 RUN mkdir -p /app/uploads
 
-COPY --from=builder /workspace/build/libs/*.jar app.jar
+COPY build/libs/*.jar app.jar
 
 EXPOSE 8080
 

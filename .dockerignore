@@ -2,7 +2,9 @@
 .github
 .gradle
 .vscode
-build
+build/*
+!build/libs/
+!build/libs/*.jar
 node_modules
 out
 
