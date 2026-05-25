@@ -9,5 +9,5 @@ out
 .env
 *.log
 
-src/test
+src/test/*
 table-specification.html
