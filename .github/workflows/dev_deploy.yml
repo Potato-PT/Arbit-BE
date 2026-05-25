@@ -47,6 +47,7 @@ jobs:
           cp docker-compose.yml deploy/docker-compose.yml
           cp docker-entrypoint.sh deploy/docker-entrypoint.sh
           cp build/libs/*.jar deploy/build/libs/
+          tar -czf deploy.tar.gz -C deploy .
 
       - name: Upload Deploy Bundle To Server
         uses: appleboy/scp-action@v0.1.7
@@ -55,9 +56,8 @@ jobs:
           username: ${{ vars.GCP_USERNAME }}
           key: ${{ secrets.GCP_SSH_KEY }}
           port: ${{ vars.GCP_PORT || 22 }}
-          source: "deploy/Dockerfile,deploy/docker-compose.yml,deploy/docker-entrypoint.sh,deploy/build/libs/*.jar"
+          source: "deploy.tar.gz"
           target: /home/lalalove0310/arbit
-          strip_components: 1
 
       - name: Build And Restart
         uses: appleboy/ssh-action@v1.0.3
@@ -79,6 +79,8 @@ jobs:
           envs: DB_URL,DB_USERNAME,DB_PASSWORD,GCP_JWT_SECRET,KAKAO_REST_API_KEY,KAKAO_LOCAL_BASE_URL,JWT_ACCESS_TOKEN_VALIDITY_MS,JWT_REFRESH_TOKEN_VALIDITY_MS
           script: |
             cd /home/lalalove0310/arbit
+            tar -xzf deploy.tar.gz
+            rm -f deploy.tar.gz
             docker compose build app
             docker compose up -d app
             docker compose logs --tail=200 app
