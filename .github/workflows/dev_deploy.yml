@@ -47,20 +47,21 @@ jobs:
           cp docker-compose.yml deploy/docker-compose.yml
           cp docker-entrypoint.sh deploy/docker-entrypoint.sh
           cp build/libs/*.jar deploy/build/libs/
-          tar -czf deploy.tar.gz -C deploy .
 
-      - name: Upload Deploy Bundle To Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ vars.GCP_HOST }}
-          username: ${{ vars.GCP_USERNAME }}
-          key: ${{ secrets.GCP_SSH_KEY }}
-          port: ${{ vars.GCP_PORT || 22 }}
-          source: "deploy.tar.gz"
-          target: /home/lalalove0310/arbit
+      - name: Set Up SSH
+        env:
+          GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$GCP_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "${{ vars.GCP_PORT || 22 }}" "${{ vars.GCP_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync Deploy Bundle To Server
+        run: |
+          rsync -avz --delete -e "ssh -p ${{ vars.GCP_PORT || 22 }}" deploy/ "${{ vars.GCP_USERNAME }}@${{ vars.GCP_HOST }}:/home/lalalove0310/arbit/"
 
       - name: Build And Restart
-        uses: appleboy/ssh-action@v1.0.3
         env:
           DB_URL: ${{ vars.GCP_DB_URL }}
           DB_USERNAME: ${{ vars.GCP_DB_USERNAME }}
@@ -70,17 +71,26 @@ jobs:
           KAKAO_LOCAL_BASE_URL: https://dapi.kakao.com
           JWT_ACCESS_TOKEN_VALIDITY_MS: 3600000
           JWT_REFRESH_TOKEN_VALIDITY_MS: 604800000
-        with:
-          host: ${{ vars.GCP_HOST }}
-          username: ${{ vars.GCP_USERNAME }}
-          key: ${{ secrets.GCP_SSH_KEY }}
-          port: ${{ vars.GCP_PORT || 22 }}
-          command_timeout: 15m
-          envs: DB_URL,DB_USERNAME,DB_PASSWORD,GCP_JWT_SECRET,KAKAO_REST_API_KEY,KAKAO_LOCAL_BASE_URL,JWT_ACCESS_TOKEN_VALIDITY_MS,JWT_REFRESH_TOKEN_VALIDITY_MS
-          script: |
+        run: |
+          DB_URL_Q=$(printf '%q' "$DB_URL")
+          DB_USERNAME_Q=$(printf '%q' "$DB_USERNAME")
+          DB_PASSWORD_Q=$(printf '%q' "$DB_PASSWORD")
+          GCP_JWT_SECRET_Q=$(printf '%q' "$GCP_JWT_SECRET")
+          KAKAO_REST_API_KEY_Q=$(printf '%q' "$KAKAO_REST_API_KEY")
+          KAKAO_LOCAL_BASE_URL_Q=$(printf '%q' "$KAKAO_LOCAL_BASE_URL")
+          JWT_ACCESS_TOKEN_VALIDITY_MS_Q=$(printf '%q' "$JWT_ACCESS_TOKEN_VALIDITY_MS")
+          JWT_REFRESH_TOKEN_VALIDITY_MS_Q=$(printf '%q' "$JWT_REFRESH_TOKEN_VALIDITY_MS")
+          ssh -p "${{ vars.GCP_PORT || 22 }}" "${{ vars.GCP_USERNAME }}@${{ vars.GCP_HOST }}" "
+            export DB_URL=${DB_URL_Q}
+            export DB_USERNAME=${DB_USERNAME_Q}
+            export DB_PASSWORD=${DB_PASSWORD_Q}
+            export GCP_JWT_SECRET=${GCP_JWT_SECRET_Q}
+            export KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY_Q}
+            export KAKAO_LOCAL_BASE_URL=${KAKAO_LOCAL_BASE_URL_Q}
+            export JWT_ACCESS_TOKEN_VALIDITY_MS=${JWT_ACCESS_TOKEN_VALIDITY_MS_Q}
+            export JWT_REFRESH_TOKEN_VALIDITY_MS=${JWT_REFRESH_TOKEN_VALIDITY_MS_Q}
             cd /home/lalalove0310/arbit
-            tar -xzf deploy.tar.gz
-            rm -f deploy.tar.gz
             docker compose build app
             docker compose up -d app
             docker compose logs --tail=200 app
+          "
