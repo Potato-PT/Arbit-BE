@@ -8,8 +8,7 @@ services:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
       SERVER_PORT: 8080
       DB_URL: ${DB_URL}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_USERNAME: ${DB_USERNAME || 'root'}
       JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-change-this-development-secret}
       JWT_ACCESS_TOKEN_VALIDITY_MS: ${JWT_ACCESS_TOKEN_VALIDITY_MS:-3600000}
       JWT_REFRESH_TOKEN_VALIDITY_MS: ${JWT_REFRESH_TOKEN_VALIDITY_MS:-604800000}
@@ -17,7 +16,7 @@ services:
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
       STORAGE_LOCAL_UPLOAD_DIR: /app/uploads
     ports:
-      - "${APP_PORT:-8081}:8080"
+      - "8080:8080"
     volumes:
       - app-uploads:/app/uploads
     restart: unless-stopped
