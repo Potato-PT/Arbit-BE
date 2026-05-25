@@ -2,9 +2,9 @@ spring:
   application:
     name: arbit
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD:}
+    url: ${GCP_DB_URL}
+    username: ${GCP_DB_USERNAME}
+    password: ${GCP_DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
