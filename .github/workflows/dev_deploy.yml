@@ -56,16 +56,16 @@ jobs:
           cp docker-compose.yml deploy/docker-compose.yml
           cp docker-entrypoint.sh deploy/docker-entrypoint.sh
           cp build/libs/*.jar deploy/build/libs/
-          cat > deploy/.env <<EOF
-          GCP_DB_URL=${GCP_DB_URL}
-          GCP_DB_USERNAME=${GCP_DB_USERNAME}
-          GCP_DB_PASSWORD=${GCP_DB_PASSWORD}
-          GCP_JWT_SECRET=${GCP_JWT_SECRET}
-          KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
-          KAKAO_LOCAL_BASE_URL=${KAKAO_LOCAL_BASE_URL}
-          JWT_ACCESS_TOKEN_VALIDITY_MS=${JWT_ACCESS_TOKEN_VALIDITY_MS}
-          JWT_REFRESH_TOKEN_VALIDITY_MS=${JWT_REFRESH_TOKEN_VALIDITY_MS}
-          EOF
+          {
+            echo "GCP_DB_URL=${GCP_DB_URL}"
+            echo "GCP_DB_USERNAME=${GCP_DB_USERNAME}"
+            echo "GCP_DB_PASSWORD=${GCP_DB_PASSWORD}"
+            echo "GCP_JWT_SECRET=${GCP_JWT_SECRET}"
+            echo "KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}"
+            echo "KAKAO_LOCAL_BASE_URL=${KAKAO_LOCAL_BASE_URL}"
+            echo "JWT_ACCESS_TOKEN_VALIDITY_MS=${JWT_ACCESS_TOKEN_VALIDITY_MS}"
+            echo "JWT_REFRESH_TOKEN_VALIDITY_MS=${JWT_REFRESH_TOKEN_VALIDITY_MS}"
+          } > deploy/.env
 
       - name: Set Up SSH
         env:
