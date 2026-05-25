@@ -3,7 +3,7 @@ set -eu
 
 missing_vars=""
 
-for var_name in DB_URL DB_USERNAME JWT_SECRET; do
+for var_name in DB_URL DB_USERNAME GCP_JWT_SECRET; do
   eval "var_value=\${$var_name:-}"
   if [ -z "$var_value" ]; then
     missing_vars="${missing_vars} ${var_name}"
