@@ -55,7 +55,7 @@ jobs:
           username: ${{ vars.GCP_USERNAME }}
           key: ${{ secrets.GCP_SSH_KEY }}
           port: ${{ vars.GCP_PORT || 22 }}
-          source: "deploy/*"
+          source: "deploy/Dockerfile,deploy/docker-compose.yml,deploy/docker-entrypoint.sh,deploy/build/libs/*.jar"
           target: /home/lalalove0310/arbit
           strip_components: 1
 
