@@ -8,8 +8,10 @@ ENV STORAGE_LOCAL_UPLOAD_DIR=/app/uploads
 
 RUN mkdir -p /app/uploads
 
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 COPY build/libs/*.jar app.jar
+RUN chmod +x /app/docker-entrypoint.sh
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
