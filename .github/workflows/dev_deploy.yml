@@ -2,7 +2,7 @@ name: GCP Deploy
 
 on:
   push:
-    branches: [main, develop]
+    branches: 'main'
   workflow_dispatch:
 
 concurrency:
@@ -17,45 +17,68 @@ jobs:
   deploy:
     name: Build And Deploy
     runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: ci-test-jwt-secret-key-must-be-at-least-32-bytes
+      JWT_ACCESS_TOKEN_VALIDITY_MS: 3600000
+      JWT_REFRESH_TOKEN_VALIDITY_MS: 604800000
+      KAKAO_LOCAL_BASE_URL: https://dapi.kakao.com
+      KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Upload Source To Server
+      - name: Set Up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set Up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Jar
+        run: sh ./gradlew test bootJar --no-daemon
+
+      - name: Prepare Deploy Bundle
+        run: |
+          mkdir -p deploy/build/libs
+          cp Dockerfile deploy/Dockerfile
+          cp docker-compose.yml deploy/docker-compose.yml
+          cp docker-entrypoint.sh deploy/docker-entrypoint.sh
+          cp build/libs/*.jar deploy/build/libs/
+
+      - name: Upload Deploy Bundle To Server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ vars.GCP_HOST }}
           username: ${{ vars.GCP_USERNAME }}
           key: ${{ secrets.GCP_SSH_KEY }}
           port: ${{ vars.GCP_PORT || 22 }}
-          source: "."
+          source: "deploy/*"
           target: /home/lalalove0310/arbit
-          rm: true
+          strip_components: 1
 
       - name: Build And Restart
         uses: appleboy/ssh-action@v1.0.3
         env:
           DB_URL: ${{ vars.GCP_DB_URL }}
           DB_USERNAME: ${{ vars.GCP_DB_USERNAME }}
-          JWT_SECRET: ${{ secrets.GCP_JWT_SECRET }}
+          DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+          GCP_JWT_SECRET: ${{ secrets.GCP_JWT_SECRET }}
           KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_LOCAL_BASE_URL: https://dapi.kakao.com
+          JWT_ACCESS_TOKEN_VALIDITY_MS: 3600000
+          JWT_REFRESH_TOKEN_VALIDITY_MS: 604800000
         with:
           host: ${{ vars.GCP_HOST }}
           username: ${{ vars.GCP_USERNAME }}
           key: ${{ secrets.GCP_SSH_KEY }}
           port: ${{ vars.GCP_PORT || 22 }}
           command_timeout: 15m
-          envs: DB_URL,DB_USERNAME,JWT_SECRET,KAKAO_REST_API_KEY
+          envs: DB_URL,DB_USERNAME,DB_PASSWORD,GCP_JWT_SECRET,KAKAO_REST_API_KEY,KAKAO_LOCAL_BASE_URL,JWT_ACCESS_TOKEN_VALIDITY_MS,JWT_REFRESH_TOKEN_VALIDITY_MS
           script: |
             cd /home/lalalove0310/arbit
-
-            cat > .env <<EOF
-            DB_URL=${DB_URL}
-            DB_USERNAME=${DB_USERNAME}
-            JWT_SECRET=${JWT_SECRET}
-            KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}
-            EOF
-
-            docker compose down
-            docker compose up -d --build
+            docker compose build app
+            docker compose up -d app
+            docker compose logs --tail=200 app

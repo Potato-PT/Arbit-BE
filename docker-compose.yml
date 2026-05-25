@@ -7,10 +7,10 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
       SERVER_PORT: 8080
-      DB_URL: ${DB_URL}
-      DB_USERNAME: ${DB_USERNAME:-root}
-      DB_PASSWORD: ${DB_PASSWORD:-root}
-      JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-change-this-development-secret}
+      DB_URL: ${DB_URL:?DB_URL must be set}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:-}
+      JWT_SECRET: ${GCP_JWT_SECRET:?GCP_JWT_SECRET must be set}
       JWT_ACCESS_TOKEN_VALIDITY_MS: ${JWT_ACCESS_TOKEN_VALIDITY_MS:-3600000}
       JWT_REFRESH_TOKEN_VALIDITY_MS: ${JWT_REFRESH_TOKEN_VALIDITY_MS:-604800000}
       KAKAO_LOCAL_BASE_URL: ${KAKAO_LOCAL_BASE_URL:-https://dapi.kakao.com}
