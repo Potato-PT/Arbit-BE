@@ -2,6 +2,7 @@ package com.arbit.app.common.config;
 
 import com.arbit.app.auth.security.JwtAuthenticationFilter;
 import com.arbit.app.auth.security.JwtProperties;
+import com.arbit.app.auth.security.RestAccessDeniedHandler;
 import com.arbit.app.auth.security.RestAuthenticationEntryPoint;
 import com.arbit.app.auth.service.KakaoLocalProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,13 +26,16 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
-                                                   RestAuthenticationEntryPoint authenticationEntryPoint)
+                                                   RestAuthenticationEntryPoint authenticationEntryPoint,
+                                                   RestAccessDeniedHandler accessDeniedHandler)
             throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
