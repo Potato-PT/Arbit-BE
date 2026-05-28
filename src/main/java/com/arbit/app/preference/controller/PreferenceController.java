@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@Tag(name = "Preferences", description = "APIs for choosing categories and taste keywords.")
+@Tag(name = "취향 입력", description = "APIs for choosing categories and taste keywords.")
 public class PreferenceController {
 
     private final PreferenceService preferenceService;
@@ -124,8 +124,8 @@ public class PreferenceController {
     @PostMapping("/api/preferences")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
-            summary = "Save preferences",
-            description = "Receives the authenticated user's selected event identifiers after signup.",
+            summary = "취향 입력",
+            description = "Stores the authenticated user's selected categories and taste keywords after signup.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(

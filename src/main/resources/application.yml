@@ -1,13 +1,10 @@
 spring:
   application:
     name: arbit
-  config:
-    # Load local developer secrets from the project root .env file.
-    import: optional:file:.env[.properties]
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/arbitdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
+    url: ${GCP_DB_URL}
+    username: ${GCP_DB_USERNAME}
+    password: ${GCP_DB_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -22,15 +19,14 @@ spring:
       max-request-size: 10MB
 
 jwt:
-  secret: ${JWT_SECRET:change-this-development-secret-change-this-development-secret}
+  secret: ${GCP_JWT_SECRET}
   access-token-validity-ms: ${JWT_ACCESS_TOKEN_VALIDITY_MS:3600000}
   refresh-token-validity-ms: ${JWT_REFRESH_TOKEN_VALIDITY_MS:1209600000}
 
 kakao:
   local:
     base-url: ${KAKAO_LOCAL_BASE_URL:https://dapi.kakao.com}
-    # Read the Kakao REST API key from the local .env file or process environment.
-    rest-api-key: ${KAKAO_REST_API_KEY:}
+    rest-api-key: ${KAKAO_REST_API_KEY}
 
 server:
   port: ${SERVER_PORT:8080}

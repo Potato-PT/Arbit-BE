@@ -23,4 +23,11 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
             order by b.createdAt desc
             """)
     List<Bookmark> findAllByUserIdWithEvent(@Param("userId") UUID userId);
+
+    @Query("""
+            select b.event.id
+            from Bookmark b
+            where b.user.id = :userId
+            """)
+    List<UUID> findEventIdsByUserId(@Param("userId") UUID userId);
 }

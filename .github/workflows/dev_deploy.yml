@@ -2,98 +2,91 @@ name: GCP Deploy
 
 on:
   push:
-    branches: [main, develop]
+    branches: 'main'
   workflow_dispatch:
 
 concurrency:
   group: GCP-deploy
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
   id-token: write
-  
+
 jobs:
   deploy:
-    name: Deploy To GCP Server
+    name: Build And Deploy
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    env:
+      GCP_JWT_SECRET: ${{ secrets.GCP_JWT_SECRET }}
+      JWT_ACCESS_TOKEN_VALIDITY_MS: 3600000
+      JWT_REFRESH_TOKEN_VALIDITY_MS: 604800000
+      KAKAO_LOCAL_BASE_URL: https://dapi.kakao.com
+      KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set Up Java 17
+      - name: Set Up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
 
       - name: Set Up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Grant Gradle Wrapper Permission
-        run: chmod +x ./gradlew
+      - name: Build Jar
+        run: sh ./gradlew test bootJar --no-daemon
 
-      - name: Build Boot Jar
-        run: ./gradlew clean bootJar --no-daemon
-
-      - name: Upload Jar To Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ vars.GCP_HOST }}
-          username: ${{ vars.GCP_USERNAME }}
-          key: ${{ secrets.GCP_SSH_KEY }}
-          port: ${{ vars.GCP_PORT || 22 }}
-          source: "build/libs/*.jar"
-          target: ${{ vars.GCP_APP_DIR }}
-          strip_components: 1
-
-      - name: Restart Application
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Prepare Deploy Bundle
         env:
-          APP_DIR: ${{ vars.GCP_APP_DIR }}
-          SERVER_PORT: ${{ vars.GCP_SERVER_PORT || 3306 }}
-          DB_URL: ${{ secrets.GCP_DB_URL }}
-          DB_USERNAME: ${{ vars.GCP_DB_USERNAME }}
-          JWT_SECRET: ${{ secrets.GCP_JWT_SECRET }}
-        with:
-          host: ${{ vars.GCP_HOST }}
-          username: ${{ vars.GCP_USERNAME }}
-          key: ${{ secrets.GCP_SSH_KEY }}
-          port: ${{ vars.GCP_PORT || 22 }}
-          envs: APP_DIR,SERVER_PORT,DB_URL,DB_USERNAME,JWT_SECRET,JWT_ACCESS_TOKEN_VALIDITY_MS,JWT_REFRESH_TOKEN_VALIDITY_MS,KAKAO_REST_API_KEY,KAKAO_LOCAL_BASE_URL,AWS_S3_BUCKET,AWS_REGION
-          script_stop: true
-          script: |
-            set -eu
-            mkdir -p "$APP_DIR"
-            cd "$APP_DIR"
+          GCP_DB_URL: ${{ vars.GCP_DB_URL }}
+          GCP_DB_USERNAME: ${{ vars.GCP_DB_USERNAME }}
+          GCP_JWT_SECRET: ${{ secrets.GCP_JWT_SECRET }}
+          GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_LOCAL_BASE_URL: https://dapi.kakao.com
+          JWT_ACCESS_TOKEN_VALIDITY_MS: 3600000
+          JWT_REFRESH_TOKEN_VALIDITY_MS: 604800000
+        run: |
+          mkdir -p deploy/build/libs
+          cp Dockerfile deploy/Dockerfile
+          cp docker-compose.yml deploy/docker-compose.yml
+          cp docker-entrypoint.sh deploy/docker-entrypoint.sh
+          cp build/libs/*.jar deploy/build/libs/
+          {
+            echo "GCP_DB_URL=${GCP_DB_URL}"
+            echo "GCP_DB_USERNAME=${GCP_DB_USERNAME}"
+            echo "GCP_DB_PASSWORD=${GCP_DB_PASSWORD}"
+            echo "GCP_JWT_SECRET=${GCP_JWT_SECRET}"
+            echo "KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}"
+            echo "KAKAO_LOCAL_BASE_URL=${KAKAO_LOCAL_BASE_URL}"
+            echo "JWT_ACCESS_TOKEN_VALIDITY_MS=${JWT_ACCESS_TOKEN_VALIDITY_MS}"
+            echo "JWT_REFRESH_TOKEN_VALIDITY_MS=${JWT_REFRESH_TOKEN_VALIDITY_MS}"
+          } > deploy/.env
 
-            LATEST_JAR="$(find . -maxdepth 1 -type f -name '*.jar' ! -name 'app.jar' -printf '%T@ %p\n' | sort -nr | head -n 1 | cut -d' ' -f2-)"
-            if [ -z "$LATEST_JAR" ]; then
-              echo "No jar file was uploaded."
-              exit 1
-            fi
+      - name: Set Up SSH
+        env:
+          GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$GCP_SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p "${{ vars.GCP_PORT || 22 }}" "${{ vars.GCP_HOST }}" >> ~/.ssh/known_hosts
 
-            mv "$LATEST_JAR" app.jar
+      - name: Sync Deploy Bundle To Server
+        run: |
+          rsync -avz --delete -e "ssh -p ${{ vars.GCP_PORT || 22 }}" deploy/ "${{ vars.GCP_USERNAME }}@${{ vars.GCP_HOST }}:/home/lalalove0310/arbit/"
 
-            cat > .env <<EOF
-            SERVER_PORT=${SERVER_PORT}
-            DB_URL=${DB_URL}
-            DB_USERNAME=${DB_USERNAME}
-            JWT_SECRET=${JWT_SECRET}
-            EOF
-
-            if pgrep -f "java -jar .*app.jar" >/dev/null 2>&1; then
-              pkill -f "java -jar .*app.jar"
-              sleep 5
-            fi
-
-            nohup java -jar app.jar > app.log 2>&1 &
-            sleep 15
-
-            if ! pgrep -f "java -jar .*app.jar" >/dev/null 2>&1; then
-              echo "Application failed to start."
-              tail -n 100 app.log || true
-              exit 1
-            fi
+      - name: Build And Restart
+        run: |
+          ssh -p "${{ vars.GCP_PORT || 22 }}" "${{ vars.GCP_USERNAME }}@${{ vars.GCP_HOST }}" "
+            cd /home/lalalove0310/arbit
+            ls -la
+            test -f .env || { echo '.env not found after rsync'; exit 1; }
+            docker compose build app
+            docker compose up -d app
+            docker compose logs --tail=200 app
+          "

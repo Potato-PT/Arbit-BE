@@ -1,18 +1,26 @@
 services:
-  mysql:
-    image: mysql:8.4
-    container_name: arbitdb
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: arbit-app
     environment:
-      MYSQL_DATABASE: arbitdb
-      MYSQL_ROOT_PASSWORD: root
-      TZ: Asia/Seoul
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
+      SERVER_PORT: 8080
+      GCP_DB_URL: ${GCP_DB_URL:?GCP_DB_URL must be set}
+      GCP_DB_USERNAME: ${GCP_DB_USERNAME:?GCP_DB_USERNAME must be set}
+      GCP_DB_PASSWORD: ${GCP_DB_PASSWORD:?GCP_DB_PASSWORD must be set}
+      GCP_JWT_SECRET: ${GCP_JWT_SECRET:?GCP_JWT_SECRET must be set}
+      JWT_ACCESS_TOKEN_VALIDITY_MS: ${JWT_ACCESS_TOKEN_VALIDITY_MS:-3600000}
+      JWT_REFRESH_TOKEN_VALIDITY_MS: ${JWT_REFRESH_TOKEN_VALIDITY_MS:-604800000}
+      KAKAO_LOCAL_BASE_URL: ${KAKAO_LOCAL_BASE_URL:-https://dapi.kakao.com}
+      KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
+      STORAGE_LOCAL_UPLOAD_DIR: /app/uploads
     ports:
-      - "3306:3306"
+      - "8080:8080"
     volumes:
-      - mysql-data:/var/lib/mysql
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
+      - app-uploads:/app/uploads
+    restart: unless-stopped
 
 volumes:
-  mysql-data:
+  app-uploads:

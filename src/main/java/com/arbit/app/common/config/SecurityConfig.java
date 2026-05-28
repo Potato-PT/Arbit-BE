@@ -2,6 +2,7 @@ package com.arbit.app.common.config;
 
 import com.arbit.app.auth.security.JwtAuthenticationFilter;
 import com.arbit.app.auth.security.JwtProperties;
+import com.arbit.app.auth.security.RestAccessDeniedHandler;
 import com.arbit.app.auth.security.RestAuthenticationEntryPoint;
 import com.arbit.app.auth.service.KakaoLocalProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -12,6 +13,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,15 +26,20 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
-                                                   RestAuthenticationEntryPoint authenticationEntryPoint)
+                                                   RestAuthenticationEntryPoint authenticationEntryPoint,
+                                                   RestAccessDeniedHandler accessDeniedHandler)
             throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(authenticationEntryPoint))
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/home").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/preferences/categories").permitAll()
                         .anyRequest().authenticated()
                 )
