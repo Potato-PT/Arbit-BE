@@ -63,10 +63,13 @@ public class PreferenceService {
     }
 
     @Transactional
-    public void createPreferences(UUID userId, List<Long> eventIds) {
+    public void createPreferences(UUID userId, List<UUID> eventIds) {
+        if (eventIds == null || eventIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
+
         userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        eventIds.size();
     }
 
     private record SeedEventsResponse(
@@ -77,7 +80,7 @@ public class PreferenceService {
     }
 
     private record SeedEvent(
-            @JsonProperty("event_id") Long eventId,
+            @JsonProperty("event_id") UUID eventId,
             String title,
             String genre
     ) {
