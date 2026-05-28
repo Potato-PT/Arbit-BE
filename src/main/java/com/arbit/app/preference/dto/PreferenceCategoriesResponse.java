@@ -1,27 +1,21 @@
 package com.arbit.app.preference.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 
-@Schema(description = "Choose-preferences options response")
+@Schema(description = "Filtered event returned for choosing preferences")
 public record PreferenceCategoriesResponse(
-        @Schema(description = "Primary category groups")
-        List<PreferenceCategoryGroup> keyword1,
+        @JsonProperty("event_id")
+        @Schema(description = "Event identifier", example = "1")
+        Long eventId,
 
-        @Schema(description = "Mood keywords")
-        List<String> keyword2,
+        @Schema(description = "Event title", example = "Seoul Media Art Exhibition")
+        String title,
 
-        @Schema(description = "Audience keywords")
-        List<String> keyword3
+        @Schema(description = "Event genre", example = "exhibition")
+        String genre,
+
+        @Schema(description = "Event poster image URL", example = "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png")
+        String posterImage
 ) {
-
-    @Schema(description = "Choose-preferences primary category group")
-    public record PreferenceCategoryGroup(
-            @Schema(description = "Category name", example = "전시/미술")
-            String category,
-
-            @Schema(description = "Subcategory names")
-            List<String> subcategories
-    ) {
-    }
 }
