@@ -2,129 +2,116 @@
 
 Instructions for agents working on this project.
 
----
+## 1. Priority Rules
 
-# Project Overview
+Follow these rules first.
 
-This is a Spring Boot backend project named `arbit`.
+- Never modify request JSON or response JSON formats that are already defined in Swagger/OpenAPI.
+- When asked to develop or change a feature, write or update the Swagger/OpenAPI definition first.
+- After writing Swagger/OpenAPI, verify that request and response fields match the intended API contract before changing implementation code.
+- Keep controllers thin. Put business logic in services.
+- All controller responses must use `ApiResponse<T>`.
+- All exception handling must go through `GlobalExceptionHandler`.
+- Do not return raw exception messages directly.
+- When fixing an error by checking logs after execution, run and inspect logs up to 3 times. If the issue still fails on the 3rd attempt, stop retrying and explain why the last attempt failed.
 
-The service provides personalized exhibition/performance/event recommendations
-based on user preferences, keywords, bookmarks, reviews, and classification tags.
+## 2. Project Summary
 
-Main features include:
+- Project name: `arbit`
+- Stack: Java 17, Spring Boot 3.3.4, Gradle, MySQL, Spring Data JPA, Spring Security, JWT, Lombok, Docker Compose, Google Cloud Storage
+- Domain: personalized exhibition, performance, and event recommendation service
+
+Main features:
 
 - JWT-based authentication
 - Personalized recommendation system
 - Preference keyword management
-- Exhibition/performance/event search & filtering
+- Event search and filtering
 - Bookmark system
-- Review & rating system
-- OCR-based review verification (planned)
+- Review and rating system
 - Profile-based cloud storage abstraction
 - Recommendation score generation
 
----
+Planned features:
 
-# Tech Stack
+- OCR-based review verification
+- Social login
+- NLP-based keyword extraction
+- Personalized notifications
+- Embedding/vector-based recommendation
+- Redis caching
+- Elasticsearch-based search
 
-- Java 17
-- Spring Boot 3.3.4
-- Gradle (Groovy DSL)
-- MySQL
-- Spring Data JPA
-- Spring Security + JWT
-- Lombok
-- Docker Compose
-- Google Cloud Storage
+## 3. Package and Code Structure
 
----
-
-# Package Structure
-
-Keep package names under:
+Keep all packages under:
 
 ```text
 com.arbit.app
 ```
 
-Recommended domain-oriented structure:
+Recommended structure:
 
 ```text
 src/main/java/com/arbit/app/
-
-├── auth
-├── user
-├── category
-├── keyword
-├── event
-├── recommendation
-├── bookmark
-├── review
-├── storage
-├── notification
-├── common
-│   ├── response
-│   ├── exception
-│   ├── config
-│   └── util
+|- auth
+|- user
+|- category
+|- keyword
+|- event
+|- recommendation
+|- bookmark
+|- review
+|- storage
+|- notification
+`- common
+   |- response
+   |- exception
+   |- config
+   `- util
 ```
 
----
+Code conventions:
 
-# Main Domain Model
+- Prefer constructor injection.
+- Prefer immutable DTOs.
+- Repositories should contain only persistence logic.
+- Use descriptive method names.
+- Avoid hardcoded strings.
+- Extract constants when values are repeated.
 
-The system is built around these core entities:
+## 4. Domain Model
 
-- USER
-- EVENT
-- CATEGORY
-- REVIEW
-- BOOKMARK
-- RECOMMENDATION
-- CLASSIFICATION_KEYWORD
-- EVENT_CLASSIFICATION
-- USER_CATEGORY
-- USER_PREFERENCE_KEYWORD
-- PREFERENCE_KEYWORD
-- EVENT_KEYWORD
+Core entities:
 
-ERD reference must be respected when creating entities and relationships.
+- `USER`
+- `EVENT`
+- `CATEGORY`
+- `REVIEW`
+- `BOOKMARK`
+- `RECOMMENDATION`
+- `CLASSIFICATION_KEYWORD`
+- `EVENT_CLASSIFICATION`
+- `USER_CATEGORY`
+- `USER_PREFERENCE_KEYWORD`
+- `PREFERENCE_KEYWORD`
+- `EVENT_KEYWORD`
 
----
+Respect the ERD when creating entities and relationships.
 
-# Database Rules
+## 5. Database Rules
 
-- Use JPA + Hibernate
-- Database: MySQL
-- Keep:
+- Use JPA + Hibernate.
+- Database is MySQL.
+- Keep `spring.jpa.hibernate.ddl-auto=update`.
+- Use UUID for `USER` and `EVENT`.
+- Use `@Enumerated(EnumType.STRING)` for every enum field.
+- Include `created_at` and `updated_at` when applicable.
+- Avoid N+1 queries with fetch join or `EntityGraph` when needed.
+- Enforce bookmark uniqueness: one user cannot bookmark the same event twice.
+- Enforce review uniqueness: one user can write only one review per event.
 
-```yaml
-spring.jpa.hibernate.ddl-auto=update
-```
-
-- UUID should be used for:
-  - USER
-  - EVENT
-
-- Use `@Enumerated(EnumType.STRING)` for all ENUM fields.
-
-- Always include:
-  - created_at
-  - updated_at (when applicable)
-
-- Avoid N+1 queries:
-  - use fetch join
-  - use EntityGraph when needed
-
-- Bookmark uniqueness:
-  - one user cannot bookmark the same event twice
-
-- Review uniqueness:
-  - one user can write only one review per event
-
----
-
-# Authentication Rules
+## 6. Authentication and Security Rules
 
 Authentication is based on:
 
@@ -134,24 +121,22 @@ Authentication is based on:
 
 Requirements:
 
-- Password must be encrypted using BCrypt
-- JWT must be stateless
-- Use Spring Security filter chain
-- Unauthorized responses should return unified error format
+- Encode passwords with BCrypt.
+- Keep JWT authentication stateless.
+- Use Spring Security filter chain.
+- Return unauthorized responses in the unified error format.
 
-Future extension:
+Future extension targets:
+
 - Google Login
 - Apple Login
 
----
+## 7. API Rules
 
-# API Response Rules
-
-All controller responses must use:
-
-```java
-ApiResponse<T>
-```
+- Every controller response must use `ApiResponse<T>`.
+- Keep request and response JSON formats identical to the Swagger/OpenAPI contract.
+- Centralize error handling in `GlobalExceptionHandler`.
+- Handle validation errors in `GlobalExceptionHandler`.
 
 Example:
 
@@ -159,69 +144,55 @@ Example:
 return ApiResponse.success(data);
 ```
 
-Error handling must be centralized in:
-
-```text
-GlobalExceptionHandler
-```
-
-Do not return raw exception messages directly.
-
----
-
-# Recommendation System Rules
+## 8. Recommendation Rules
 
 Recommendation logic is a core domain feature.
 
-Recommendation score may include:
+Recommendation scoring may include:
 
-- User selected categories
-- Preference keywords
-- Event keywords
-- Review-derived tags
-- Similar users
-- Mood/classification similarity
-- Distance/location relevance
+- user selected categories
+- preference keywords
+- event keywords
+- review-derived tags
+- similar users
+- mood or classification similarity
+- distance or location relevance
 
-Recommendation result should contain:
+Recommendation results should contain:
 
-- match_score
+- `match_score`
 - recommendation reason text
 
-Example:
+Example reason:
 
 ```text
 "미디어아트 키워드와 일치"
 ```
 
-Keep recommendation generation logic inside:
+Implementation rule:
 
-```text
-recommendation/service
-```
+- Keep recommendation generation logic inside `recommendation/service`.
+- Do not place recommendation logic directly in controllers.
 
-Do not place recommendation logic directly inside controllers.
+## 9. Review Rules
 
----
+Review requirements:
 
-# Review System Rules
+- rating range: `1` to `5`
+- max review text length: `200`
 
-Review features:
+Planned review extensions:
 
-- Rating: 1~5
-- Max review text length: 200
-- OCR verification image upload (planned)
-- Positive/negative keyword extraction (planned)
+- OCR verification image upload
+- positive/negative keyword extraction
 
-When review is created:
+When a review is created:
 
-- Update average rating
-- Extract preference keywords if enabled
-- Reflect immediately in recommendation data
+- update average rating
+- extract preference keywords if enabled
+- reflect the change in recommendation data immediately
 
----
-
-# Event Rules
+## 10. Event Rules
 
 Event status values:
 
@@ -231,54 +202,29 @@ ongoing
 closed
 ```
 
-Event sorting:
+Default and supported sorting:
 
-- closing soon (default)
+- closing soon
 - distance
 - latest
 
-Filtering:
+Supported filtering:
 
 - category
 - district
-- free/paid
-- ongoing/upcoming
+- free or paid
+- ongoing or upcoming
 
----
+## 11. Storage Rules
 
-# Storage Rules
+- Keep storage implementations profile-specific.
+- Use `@Profile("gcp")` for `GcsStorageService`.
+- Do not mix provider-specific logic into business services.
+- Controllers and services must depend on `StorageService` interface only.
 
-Storage implementation must remain profile-specific.
+## 12. Scheduler Rules
 
-```java
-@Profile("gcp")
-```
-
-for:
-
-```text
-GcsStorageService
-```
-
-Never mix provider-specific logic inside business services.
-
-Controllers/services should depend on:
-
-```text
-StorageService interface
-```
-
-only.
-
----
-
-# Scheduler Rules
-
-Scheduled notifications must remain in:
-
-```text
-NotificationScheduler
-```
+- Keep scheduled notification logic in `NotificationScheduler`.
 
 Possible notification targets:
 
@@ -287,30 +233,24 @@ Possible notification targets:
 - early bird deadlines
 - closing soon reminders
 
----
+## 13. Validation Rules
 
-# Validation Rules
+Use Bean Validation annotations such as:
 
-Use Bean Validation:
+- `@NotNull`
+- `@NotBlank`
+- `@Size`
+- `@Min`
+- `@Max`
 
-- @NotNull
-- @NotBlank
-- @Size
-- @Min
-- @Max
-
-Examples:
+Example:
 
 ```java
 @Size(max = 200)
 private String content;
 ```
 
-All validation errors should be handled by GlobalExceptionHandler.
-
----
-
-# Configuration Files
+## 14. Configuration and Environment Rules
 
 Maintain these files:
 
@@ -326,9 +266,14 @@ src/main/resources/application.yml
 src/main/resources/application-gcp.yml
 ```
 
----
+Environment rules:
 
-# Local Development
+- Never commit secrets.
+- Use `.env` for local secrets.
+- Keep `.env` in `.gitignore`.
+- Use `SPRING_PROFILES_ACTIVE=gcp` when selecting the GCP profile.
+
+## 15. Local Development Commands
 
 Start MySQL:
 
@@ -361,78 +306,18 @@ sh ./gradlew build --no-daemon
 sh ./gradlew test --no-daemon
 ```
 
----
-
-# Environment Rules
-
-Secrets must NOT be committed.
-
-Use:
-
-```text
-.env
-```
-
-for local secrets.
-
-`.env` must remain gitignored.
-
-Profile selection:
-
-```text
-SPRING_PROFILES_ACTIVE=gcp
-```
-
----
-
-# Coding Conventions
-
-- Prefer constructor injection
-- Prefer immutable DTOs
-- Keep controllers thin
-- Business logic belongs in services
-- Repository should contain only DB logic
-- Use descriptive method names
-- Avoid hardcoded strings
-- Extract constants when repeated
-
----
-
-# Agent Workflow Rules
-
-- When asked to develop a feature, write the Swagger/OpenAPI code first.
-- After writing the Swagger/OpenAPI code, verify that the request and response values match the user's intended contract before moving on.
-- When given an instruction equivalent to "Fix the error by reading the log after execution", run and inspect logs up to three times while attempting fixes.
-- If it still fails after the third execution attempt, stop retrying and briefly explain why the last attempt did not work.
-
----
-
-# Testing Rules
+## 16. Testing Rules
 
 Recommended test layers:
 
-- Repository tests
-- Service tests
-- Controller integration tests
+- repository tests
+- service tests
+- controller integration tests
 
-Important test targets:
+Priority test targets:
 
 - JWT authentication
-- Recommendation generation
-- Bookmark duplication prevention
-- Review validation
-- Filter/search logic
-
----
-
-# Future Expansion Notes
-
-Planned future features:
-
-- Social login
-- NLP-based keyword extraction
-- OCR ticket verification
-- Personalized notification system
-- Embedding/vector-based recommendation
-- Redis caching
-- Elasticsearch-based search
+- recommendation generation
+- bookmark duplication prevention
+- review validation
+- filter and search logic
