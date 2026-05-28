@@ -5,6 +5,7 @@ import com.arbit.app.auth.security.JwtProperties;
 import com.arbit.app.auth.security.RestAccessDeniedHandler;
 import com.arbit.app.auth.security.RestAuthenticationEntryPoint;
 import com.arbit.app.auth.service.KakaoLocalProperties;
+import com.arbit.app.preference.service.SeedEventProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +22,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, KakaoLocalProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, KakaoLocalProperties.class, SeedEventProperties.class})
 public class SecurityConfig {
 
     @Bean

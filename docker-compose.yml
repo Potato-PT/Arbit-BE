@@ -15,6 +15,7 @@ services:
       JWT_REFRESH_TOKEN_VALIDITY_MS: ${JWT_REFRESH_TOKEN_VALIDITY_MS:-604800000}
       KAKAO_LOCAL_BASE_URL: ${KAKAO_LOCAL_BASE_URL:-https://dapi.kakao.com}
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
+      SEED_EVENT_BASE_URL: ${SEED_EVENT_BASE_URL:-http://seed-event:8001}
       STORAGE_LOCAL_UPLOAD_DIR: /app/uploads
     ports:
       - "8080:8080"
