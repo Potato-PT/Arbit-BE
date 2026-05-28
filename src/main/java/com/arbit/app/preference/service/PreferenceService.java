@@ -25,10 +25,11 @@ public class PreferenceService {
     private final RestClient seedEventRestClient;
 
     public PreferenceService(UserRepository userRepository,
-                             RestClient.Builder restClientBuilder) {
+                             RestClient.Builder restClientBuilder,
+                             SeedEventProperties seedEventProperties) {
         this.userRepository = userRepository;
         this.seedEventRestClient = restClientBuilder
-                .baseUrl("http://localhost:8001")
+                .baseUrl(seedEventProperties.baseUrl())
                 .build();
     }
 
