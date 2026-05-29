@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
@@ -36,7 +37,8 @@ public class Event extends BaseTimeEntity {
     @Column(nullable = false, length = 200)
     private String title;
 
-    @Column(length = 1000)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(length = 1000)
@@ -45,8 +47,15 @@ public class Event extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String venue;
 
+    @Column(length = 255)
+    private String venueAddress;
+
     @Column(nullable = false, length = 50)
     private String district;
+
+    private Double latitude;
+
+    private Double longitude;
 
     @Column(nullable = false)
     private LocalDate startDate;
@@ -64,21 +73,34 @@ public class Event extends BaseTimeEntity {
     @Column(nullable = false, precision = 3, scale = 2)
     private BigDecimal averageRating;
 
+    @Column(length = 255)
+    private String price;
+
+    @Column(length = 1000)
+    private String bookingUrl;
+
     @Builder
-    private Event(Category category, String title, String description, String posterImageUrl, String venue, String district,
-                  LocalDate startDate, LocalDate endDate, boolean free, EventStatus status) {
+    private Event(Category category, String title, String description, String posterImageUrl, String venue,
+                  String venueAddress, String district, Double latitude, Double longitude,
+                  LocalDate startDate, LocalDate endDate, boolean free, EventStatus status,
+                  String price, String bookingUrl) {
         this.id = UUID.randomUUID();
         this.category = category;
         this.title = title;
         this.description = description;
         this.posterImageUrl = posterImageUrl;
         this.venue = venue;
+        this.venueAddress = venueAddress;
         this.district = district;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.startDate = startDate;
         this.endDate = endDate;
         this.free = free;
         this.status = status;
         this.averageRating = BigDecimal.ZERO;
+        this.price = price;
+        this.bookingUrl = bookingUrl;
     }
 
     public void updateAverageRating(BigDecimal averageRating) {

@@ -113,6 +113,7 @@ public class RecommendationService {
                 parseDate(recommendation.startDate()),
                 parseDate(recommendation.endDate()),
                 recommendation.free(),
+                null,
                 parseStatus(recommendation.status()),
                 toMatchScore(recommendation.matchPct()),
                 false
