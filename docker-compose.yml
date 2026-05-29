@@ -25,5 +25,17 @@ services:
       - app-uploads:/app/uploads
     restart: unless-stopped
 
+  arbit-ai:
+    container_name: arbit-ai
+    build:
+      context: ../arbit-ai
+      dockerfile: Dockerfile
+    env_file:
+      - ../arbit-ai/.env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+
 volumes:
   app-uploads:
