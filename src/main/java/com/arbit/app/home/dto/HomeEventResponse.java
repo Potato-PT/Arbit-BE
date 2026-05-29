@@ -31,6 +31,9 @@ public record HomeEventResponse(
         @Schema(description = "Whether the event is free", example = "false")
         boolean free,
 
+        @Schema(description = "Admission price description", example = "전석 20,000", nullable = true)
+        String price,
+
         @Schema(description = "Event status", example = "ONGOING")
         EventStatus status
 ) {
@@ -45,6 +48,7 @@ public record HomeEventResponse(
                 event.getStartDate(),
                 event.getEndDate(),
                 event.isFree(),
+                event.getPrice(),
                 event.getStatus()
         );
     }

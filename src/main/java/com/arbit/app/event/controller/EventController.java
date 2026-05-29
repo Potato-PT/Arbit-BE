@@ -77,10 +77,10 @@ public class EventController {
                                                         "venue": "Metropolitan Museum",
                                                         "startDate": "2026-05-01",
                                                         "endDate": "2026-06-30",
-                                                        "fee": "전석 20,000",
+                                                        "price": "전석 20,000",
                                                         "time": "10:00 ~ 18:00 (입장마감 17:30)",
                                                         "free": false,
-                                                        "tag": ["회화", "개인전", "차분한"],
+                                                        "keyword": ["회화", "개인전", "차분한"],
                                                         "status": "ONGOING",
                                                         "rating": 4.7,
                                                         "bookmarked": true

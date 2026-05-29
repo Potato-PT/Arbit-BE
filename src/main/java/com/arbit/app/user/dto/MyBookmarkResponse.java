@@ -18,6 +18,9 @@ public record MyBookmarkResponse(
         @Schema(description = "Venue", example = "DDP")
         String venue,
 
+        @Schema(description = "Admission price description", example = "전석 20,000", nullable = true)
+        String price,
+
         @Schema(description = "Event start date", example = "2026-05-01")
         LocalDate startDate,
 
