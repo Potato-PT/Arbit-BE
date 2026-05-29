@@ -28,8 +28,8 @@ kakao:
     base-url: ${KAKAO_LOCAL_BASE_URL:https://dapi.kakao.com}
     rest-api-key: ${KAKAO_REST_API_KEY}
 
-seed-event:
-  base-url: ${SEED_EVENT_BASE_URL:http://localhost:8001}
+arbit-ai:
+  base-url: ${ARBIT_AI_BASE_URL:http://arbit-ai:8001}
 
 server:
   port: ${SERVER_PORT:8080}

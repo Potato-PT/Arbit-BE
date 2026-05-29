@@ -17,19 +17,20 @@ import org.springframework.web.client.RestClientException;
 public class PreferenceService {
 
     private static final int SEED_EVENT_SAMPLE_SIZE = 10;
+    private static final int RECOMMENDATION_LIMIT = 10;
     private static final int RANDOM_STATE_BOUND = 1_000_000;
     private static final String DEFAULT_POSTER_IMAGE_URL =
             "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png";
 
     private final UserRepository userRepository;
-    private final RestClient seedEventRestClient;
+    private final RestClient arbitAiRestClient;
 
     public PreferenceService(UserRepository userRepository,
                              RestClient.Builder restClientBuilder,
-                             SeedEventProperties seedEventProperties) {
+                             ArbitAiProperties arbitAiProperties) {
         this.userRepository = userRepository;
-        this.seedEventRestClient = restClientBuilder
-                .baseUrl(seedEventProperties.baseUrl())
+        this.arbitAiRestClient = restClientBuilder
+                .baseUrl(arbitAiProperties.baseUrl())
                 .build();
     }
 
@@ -37,7 +38,7 @@ public class PreferenceService {
         int rand = ThreadLocalRandom.current().nextInt(RANDOM_STATE_BOUND);
 
         try {
-            SeedEventsResponse response = seedEventRestClient.get()
+            SeedEventsResponse response = arbitAiRestClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/seed-events")
                             .queryParam("sample_size", SEED_EVENT_SAMPLE_SIZE)
@@ -64,13 +65,23 @@ public class PreferenceService {
     }
 
     @Transactional
-    public void createPreferences(UUID userId, List<UUID> eventIds) {
+    public void createPreferences(UUID userId, List<Integer> eventIds) {
         if (eventIds == null || eventIds.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
         userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+
+        try {
+            arbitAiRestClient.post()
+                    .uri("/recommendations")
+                    .body(new RecommendationRequest(eventIds, RECOMMENDATION_LIMIT))
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientException | IllegalArgumentException exception) {
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to create recommendations.");
+        }
     }
 
     private record SeedEventsResponse(
@@ -81,9 +92,15 @@ public class PreferenceService {
     }
 
     private record SeedEvent(
-            @JsonProperty("event_id") UUID eventId,
+            @JsonProperty("event_id") Integer eventId,
             String title,
             String genre
+    ) {
+    }
+
+    private record RecommendationRequest(
+            @JsonProperty("event_ids") List<Integer> eventIds,
+            int limit
     ) {
     }
 }
