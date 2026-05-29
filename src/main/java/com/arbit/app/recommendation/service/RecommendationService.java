@@ -9,6 +9,7 @@ import com.arbit.app.recommendation.dto.RecommendedEventResponse;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class RecommendationService {
@@ -74,10 +76,24 @@ public class RecommendationService {
             log.info("Mapped AI recommendations for home response. userId={}, responseCount={}, elapsedMs={}",
                     userId, response.size(), elapsedMillis(startedAt));
             return response;
-        } catch (RestClientException | IllegalArgumentException exception) {
+        } catch (RestClientResponseException exception) {
+            log.error("AI recommendation server returned an error. userId={}, eventIds={}, statusCode={}, responseBody={}, elapsedMs={}",
+                    userId,
+                    eventIds,
+                    exception.getStatusCode(),
+                    exception.getResponseBodyAsString(),
+                    elapsedMillis(startedAt),
+                    exception);
+
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load recommendations from AI server.");
+        } catch (RestClientException exception) {
             log.error("AI recommendation request failed. userId={}, eventIds={}, elapsedMs={}",
                     userId, eventIds, elapsedMillis(startedAt), exception);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load recommendations from AI server.");
+        } catch (IllegalArgumentException exception) {
+            log.error("AI recommendation response mapping failed. userId={}, eventIds={}, elapsedMs={}",
+                    userId, eventIds, elapsedMillis(startedAt), exception);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to process recommendations from AI server.");
         }
     }
 
@@ -107,22 +123,38 @@ public class RecommendationService {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return LocalDate.parse(value);
+
+        String normalized = value.trim();
+        if (normalized.length() >= 10) {
+            normalized = normalized.substring(0, 10);
+        }
+
+        try {
+            return LocalDate.parse(normalized);
+        } catch (DateTimeParseException exception) {
+            log.warn("Invalid AI recommendation date received. value={}", value);
+            return null;
+        }
     }
 
     private EventStatus parseStatus(String value) {
         if (value == null || value.isBlank()) {
             return null;
         }
-        return switch (value.toLowerCase()) {
-            case "upcoming", "예정" -> EventStatus.UPCOMING;
-            case "closed", "종료" -> EventStatus.CLOSED;
-            case "ongoing", "진행중", "마감임박" -> EventStatus.ONGOING;
-            default -> {
-                log.warn("Unknown AI recommendation status received. status={}", value);
-                yield EventStatus.ONGOING;
-            }
-        };
+
+        String normalized = value.trim().toLowerCase();
+        if (normalized.equals("upcoming") || normalized.contains("예정")) {
+            return EventStatus.UPCOMING;
+        }
+        if (normalized.equals("closed") || normalized.contains("종료")) {
+            return EventStatus.CLOSED;
+        }
+        if (normalized.equals("ongoing") || normalized.contains("진행") || normalized.contains("마감")) {
+            return EventStatus.ONGOING;
+        }
+
+        log.warn("Unknown AI recommendation status received. status={}", value);
+        return EventStatus.ONGOING;
     }
 
     private BigDecimal toMatchScore(Double value) {
