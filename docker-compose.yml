@@ -15,10 +15,8 @@ services:
       JWT_REFRESH_TOKEN_VALIDITY_MS: ${JWT_REFRESH_TOKEN_VALIDITY_MS:-604800000}
       KAKAO_LOCAL_BASE_URL: ${KAKAO_LOCAL_BASE_URL:-https://dapi.kakao.com}
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
-      ARBIT_AI_BASE_URL: ${ARBIT_AI_BASE_URL:-http://host.docker.internal:8001}
+      ARBIT_AI_BASE_URL: ${ARBIT_AI_BASE_URL:-http://arbit-ai:8000}
       STORAGE_LOCAL_UPLOAD_DIR: /app/uploads
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     ports:
       - "8080:8080"
     volumes:
