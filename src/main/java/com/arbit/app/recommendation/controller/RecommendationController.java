@@ -5,6 +5,7 @@ import com.arbit.app.common.response.ApiResponse;
 import com.arbit.app.common.response.ErrorResponse;
 import com.arbit.app.recommendation.service.RecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,7 +40,7 @@ public class RecommendationController {
     @GetMapping
     @Operation(
             summary = "Get home recommendations",
-            description = "Returns the authenticated user's personalized recommendation list for the home screen, including match scores.",
+            description = "Calls the AI recommendation server with selected event IDs and returns the personalized recommendation list for the home screen.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -53,16 +55,16 @@ public class RecommendationController {
                                                       "data": [
                                                         {
                                                           "title": "Echoes of Silence",
-                                                          "category": "Media Art",
-                                                          "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
-                                                          "url": "전시/공연 홈페이지 주소",
-                                                          "venue": "Metropolitan Museum",
+                                                          "category": "exhibition",
+                                                          "posterImageUrl": null,
+                                                          "venue": null,
+                                                          "district": "Jongno-gu",
                                                           "startDate": "2026-05-01",
                                                           "endDate": "2026-06-30",
                                                           "free": false,
                                                           "status": "ONGOING",
                                                           "matchScore": 97.50,
-                                                          "bookmarked": true
+                                                          "bookmarked": false
                                                         }
                                                       ],
                                                       "error": null
@@ -95,31 +97,38 @@ public class RecommendationController {
     )
     public ApiResponse<List<com.arbit.app.recommendation.dto.RecommendedEventResponse>> getRecommendations(
             @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(
+                    description = "Selected AI event IDs. Send 4 to 5 values.",
+                    example = "0,12,34,56",
+                    required = true
+            )
+            @RequestParam List<Integer> eventIds,
             HttpServletRequest request) {
         long startedAt = System.nanoTime();
         String method = request.getMethod();
         String requestUri = request.getRequestURI();
 
-        log.info("Home recommendation request received. method={}, uri={}, userId={}",
-                method, requestUri, userDetails.id());
+        log.info("Home recommendation request received. method={}, uri={}, userId={}, eventIds={}",
+                method, requestUri, userDetails.id(), eventIds);
 
         try {
             List<com.arbit.app.recommendation.dto.RecommendedEventResponse> recommendations =
-                    recommendationService.getRecommendations(userDetails);
+                    recommendationService.getRecommendations(userDetails, eventIds);
             ApiResponse<List<com.arbit.app.recommendation.dto.RecommendedEventResponse>> response =
                     ApiResponse.success(recommendations);
 
-            log.info("Home recommendation response ready. method={}, uri={}, userId={}, success={}, itemCount={}, elapsedMs={}",
+            log.info("Home recommendation response ready. method={}, uri={}, userId={}, success={}, itemCount={}, eventIds={}, elapsedMs={}",
                     method,
                     requestUri,
                     userDetails.id(),
                     response.success(),
                     recommendations.size(),
+                    eventIds,
                     elapsedMillis(startedAt));
             return response;
         } catch (RuntimeException exception) {
-            log.error("Home recommendation request failed. method={}, uri={}, userId={}, elapsedMs={}",
-                    method, requestUri, userDetails.id(), elapsedMillis(startedAt), exception);
+            log.error("Home recommendation request failed. method={}, uri={}, userId={}, eventIds={}, elapsedMs={}",
+                    method, requestUri, userDetails.id(), eventIds, elapsedMillis(startedAt), exception);
             throw exception;
         }
     }
@@ -149,8 +158,8 @@ public class RecommendationController {
             String title,
             String category,
             String posterImageUrl,
-            String url,
             String venue,
+            String district,
             LocalDate startDate,
             LocalDate endDate,
             boolean free,
