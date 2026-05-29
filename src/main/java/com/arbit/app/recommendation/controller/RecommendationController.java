@@ -10,9 +10,12 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Home", description = "Home screen APIs for the authenticated user.")
 @SecurityRequirement(name = "bearerAuth")
 public class RecommendationController {
+
+    private static final Logger log = LoggerFactory.getLogger(RecommendationController.class);
 
     private final RecommendationService recommendationService;
 
@@ -89,8 +94,38 @@ public class RecommendationController {
             }
     )
     public ApiResponse<List<com.arbit.app.recommendation.dto.RecommendedEventResponse>> getRecommendations(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ApiResponse.success(recommendationService.getRecommendations(userDetails));
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            HttpServletRequest request) {
+        long startedAt = System.nanoTime();
+        String method = request.getMethod();
+        String requestUri = request.getRequestURI();
+
+        log.info("Home recommendation request received. method={}, uri={}, userId={}",
+                method, requestUri, userDetails.id());
+
+        try {
+            List<com.arbit.app.recommendation.dto.RecommendedEventResponse> recommendations =
+                    recommendationService.getRecommendations(userDetails);
+            ApiResponse<List<com.arbit.app.recommendation.dto.RecommendedEventResponse>> response =
+                    ApiResponse.success(recommendations);
+
+            log.info("Home recommendation response ready. method={}, uri={}, userId={}, success={}, itemCount={}, elapsedMs={}",
+                    method,
+                    requestUri,
+                    userDetails.id(),
+                    response.success(),
+                    recommendations.size(),
+                    elapsedMillis(startedAt));
+            return response;
+        } catch (RuntimeException exception) {
+            log.error("Home recommendation request failed. method={}, uri={}, userId={}, elapsedMs={}",
+                    method, requestUri, userDetails.id(), elapsedMillis(startedAt), exception);
+            throw exception;
+        }
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000;
     }
 
     @Schema(description = "Wrapped recommendation response")
