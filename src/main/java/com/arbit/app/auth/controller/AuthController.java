@@ -45,7 +45,7 @@ public class AuthController {
                                               "nickname": "ArbitUser",
                                               "birthYear": 1998,
                                               "gender": "MALE",
-                                              "residentialArea": "Seoul Seongbuk-gu Dongseon-dong 85-92"
+                                              "residentialArea": "서울특별시 성북구 보문로34다길 2"
                                             }
                                             """
                             )
@@ -100,7 +100,7 @@ public class AuthController {
                                     name = "Login Request",
                                     value = """
                                             {
-                                              "username": "arbit_user_01",
+                                              "username": "loginId1234",
                                               "password": "password1234"
                                             }
                                             """
