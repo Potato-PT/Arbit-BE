@@ -14,4 +14,7 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
 
     @EntityGraph(attributePaths = "category")
     List<Event> findAllByOrderByCreatedAtDesc();
+
+    @EntityGraph(attributePaths = "category")
+    List<Event> findByStatusNotOrderByCreatedAtDesc(EventStatus status);
 }

@@ -9,8 +9,12 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/home")
 @Tag(name = "Home", description = "Home screen APIs.")
 public class HomeController {
+
+    private static final Logger log = LoggerFactory.getLogger(HomeController.class);
 
     private final HomeService homeService;
 
@@ -29,7 +35,7 @@ public class HomeController {
     @GetMapping
     @Operation(
             summary = "Get home screen data",
-            description = "Returns the latest registered events for non-logged-in users.",
+            description = "Returns all non-closed events for non-logged-in users, ordered by latest registration.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -64,8 +70,64 @@ public class HomeController {
                     )
             }
     )
-    public ApiResponse<HomeResponse> getHome() {
-        return ApiResponse.success(homeService.getHome());
+    public ApiResponse<HomeResponse> getHome(HttpServletRequest request) {
+        String requestId = UUID.randomUUID().toString().substring(0, 8);
+        long startedAt = System.nanoTime();
+        String method = request.getMethod();
+        String uri = request.getRequestURI();
+        String query = request.getQueryString();
+        String clientIp = request.getRemoteAddr();
+
+        log.info(
+                "home.request.start requestId={} method={} uri={} query={} clientIp={}",
+                requestId,
+                method,
+                uri,
+                query,
+                clientIp
+        );
+
+        try {
+            log.info("home.service.call requestId={}", requestId);
+            HomeResponse home = homeService.getHome(requestId);
+            log.info(
+                    "home.service.return requestId={} eventCount={}",
+                    requestId,
+                    home.events().size()
+            );
+
+            ApiResponse<HomeResponse> response = ApiResponse.success(home);
+            log.info(
+                    "home.response.ready requestId={} success={} eventCount={} elapsedMs={}",
+                    requestId,
+                    response.success(),
+                    home.events().size(),
+                    elapsedMillis(startedAt)
+            );
+            return response;
+        } catch (RuntimeException exception) {
+            log.error(
+                    "home.request.error requestId={} method={} uri={} elapsedMs={}",
+                    requestId,
+                    method,
+                    uri,
+                    elapsedMillis(startedAt),
+                    exception
+            );
+            throw exception;
+        } finally {
+            log.info(
+                    "home.request.end requestId={} method={} uri={} elapsedMs={}",
+                    requestId,
+                    method,
+                    uri,
+                    elapsedMillis(startedAt)
+            );
+        }
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000;
     }
 
     @Schema(description = "Wrapped home response")
