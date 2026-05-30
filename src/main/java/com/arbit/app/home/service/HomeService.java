@@ -1,6 +1,7 @@
 package com.arbit.app.home.service;
 
 import com.arbit.app.event.repository.EventRepository;
+import com.arbit.app.event.entity.EventStatus;
 import com.arbit.app.home.dto.HomeEventResponse;
 import com.arbit.app.home.dto.HomeResponse;
 import java.util.List;
@@ -18,7 +19,7 @@ public class HomeService {
 
     @Transactional(readOnly = true)
     public HomeResponse getHome() {
-        List<HomeEventResponse> events = eventRepository.findAllByOrderByCreatedAtDesc().stream()
+        List<HomeEventResponse> events = eventRepository.findByStatusNotOrderByCreatedAtDesc(EventStatus.CLOSED).stream()
                 .map(HomeEventResponse::from)
                 .toList();
 

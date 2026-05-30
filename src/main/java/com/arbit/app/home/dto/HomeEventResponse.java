@@ -16,11 +16,11 @@ public record HomeEventResponse(
         @Schema(description = "Poster image URL", example = "https://cdn.arbit.app/events/light-museum/poster.jpg")
         String posterImageUrl,
 
+        @Schema(description = "External official page or ticketing URL", example = "https://example.com/events/echoes-of-silence")
+        String url,
+
         @Schema(description = "Venue", example = "Metropolitan Museum")
         String venue,
-
-        @Schema(description = "District", example = "Jongno-gu")
-        String district,
 
         @Schema(description = "Event start date", example = "2026-05-01")
         LocalDate startDate,
@@ -31,9 +31,6 @@ public record HomeEventResponse(
         @Schema(description = "Whether the event is free", example = "false")
         boolean free,
 
-        @Schema(description = "Admission price description", example = "전석 20,000", nullable = true)
-        String price,
-
         @Schema(description = "Event status", example = "ONGOING")
         EventStatus status
 ) {
@@ -43,12 +40,11 @@ public record HomeEventResponse(
                 event.getTitle(),
                 event.getCategory().getName(),
                 event.getPosterImageUrl(),
+                event.getBookingUrl(),
                 event.getVenue(),
-                event.getDistrict(),
                 event.getStartDate(),
                 event.getEndDate(),
                 event.isFree(),
-                event.getPrice(),
                 event.getStatus()
         );
     }

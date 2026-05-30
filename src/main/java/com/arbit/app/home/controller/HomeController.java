@@ -29,7 +29,7 @@ public class HomeController {
     @GetMapping
     @Operation(
             summary = "Get home screen data",
-            description = "Returns the latest registered events for non-logged-in users.",
+            description = "Returns all non-closed events for non-logged-in users, ordered by latest registration.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
