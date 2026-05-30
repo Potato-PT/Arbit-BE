@@ -23,6 +23,8 @@ services:
       - app-uploads:/app/uploads
     depends_on:
       - arbit-ai
+    networks:
+      - arbit-network
     restart: unless-stopped
 
   arbit-ai:
@@ -34,8 +36,12 @@ services:
       - ../arbit-ai/.env
     ports:
       - "8000:8000"
+    networks:
+      - arbit-network
     restart: unless-stopped
-
 
 volumes:
   app-uploads:
+
+networks:
+  arbit-network:
