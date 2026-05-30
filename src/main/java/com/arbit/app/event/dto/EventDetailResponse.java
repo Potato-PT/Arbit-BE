@@ -25,14 +25,14 @@ public record EventDetailResponse(
         LocalDate startDate,
         @Schema(description = "Event end date", example = "2026-06-30")
         LocalDate endDate,
-        @Schema(description = "Admission fee description. null if not available.", example = "전석 20,000", nullable = true)
-        String fee,
+        @Schema(description = "Admission price description. null if not available.", example = "전석 20,000", nullable = true)
+        String price,
         @Schema(description = "Operating hours. null if not available.", example = "10:00 ~ 18:00 (입장마감 17:30)", nullable = true)
         String time,
         @Schema(description = "Whether the event is free of charge", example = "false")
         boolean free,
-        @ArraySchema(schema = @Schema(description = "Subcategory or mood tag", example = "회화"))
-        List<String> tag,
+        @ArraySchema(schema = @Schema(description = "Subcategory or mood keyword", example = "회화"))
+        List<String> keyword,
         @Schema(description = "Computed server-side from today's date", example = "ONGOING")
         EventStatus status,
         @Schema(description = "Average rating from user reviews. null if no reviews exist yet.", example = "4.7", nullable = true)

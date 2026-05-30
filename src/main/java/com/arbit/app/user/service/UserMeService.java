@@ -144,6 +144,7 @@ public class UserMeService {
                 bookmark.getEvent().getPosterImageUrl(),
                 bookmark.getEvent().getCategory().getName(),
                 bookmark.getEvent().getVenue(),
+                bookmark.getEvent().getPrice(),
                 bookmark.getEvent().getStartDate(),
                 bookmark.getEvent().getEndDate(),
                 bookmark.getCreatedAt()

@@ -21,6 +21,8 @@ services:
       - "8080:8080"
     volumes:
       - app-uploads:/app/uploads
+    depends_on:
+      - arbit-ai
     restart: unless-stopped
 
   arbit-ai:
