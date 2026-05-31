@@ -3,14 +3,17 @@ package com.arbit.app.auth.controller;
 import com.arbit.app.auth.dto.AuthResponse;
 import com.arbit.app.auth.dto.LoginRequest;
 import com.arbit.app.auth.dto.SignupRequest;
+import com.arbit.app.auth.security.CustomUserDetails;
 import com.arbit.app.auth.service.AuthService;
 import com.arbit.app.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -120,5 +123,47 @@ public class AuthController {
     )
     public ApiResponse<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.success(authService.login(request));
+    }
+
+    @PostMapping("/logout")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Logout and clear the current authentication context.",
+            description = "Requires an access token in the Authorization Bearer header. This is a stateless JWT logout, so clients must discard stored tokens after a successful response.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Logout succeeded.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = LogoutApiResponse.class),
+                                    examples = @ExampleObject(
+                                            name = "Logout Response",
+                                            value = """
+                                                    {
+                                                      "success": true,
+                                                      "data": null,
+                                                      "error": null
+                                                    }
+                                                    """
+                                    )
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "Authentication is required."
+                    )
+            }
+    )
+    public ApiResponse<Void> logout(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        authService.logout(userDetails);
+        return ApiResponse.ok();
+    }
+
+    private record LogoutApiResponse(
+            @Schema(example = "true") boolean success,
+            @Schema(nullable = true) Void data,
+            @Schema(nullable = true) Object error
+    ) {
     }
 }

@@ -3,6 +3,7 @@ package com.arbit.app.auth.service;
 import com.arbit.app.auth.dto.AuthResponse;
 import com.arbit.app.auth.dto.LoginRequest;
 import com.arbit.app.auth.dto.SignupRequest;
+import com.arbit.app.auth.security.CustomUserDetails;
 import com.arbit.app.auth.security.JwtTokenProvider;
 import com.arbit.app.common.exception.BusinessException;
 import com.arbit.app.common.exception.ErrorCode;
@@ -11,6 +12,8 @@ import java.time.Year;
 import com.arbit.app.user.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,9 +59,20 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+        } catch (AuthenticationException exception) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
         return issueTokens(request.username());
+    }
+
+    public void logout(CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        SecurityContextHolder.clearContext();
     }
 
     private AuthResponse issueTokens(String username) {
