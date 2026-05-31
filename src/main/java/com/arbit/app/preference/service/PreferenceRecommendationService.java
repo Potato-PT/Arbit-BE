@@ -18,16 +18,16 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
-public class PreferenceRecommendationAsyncService {
+public class PreferenceRecommendationService {
 
-    private static final Logger log = LoggerFactory.getLogger(PreferenceRecommendationAsyncService.class);
+    private static final Logger log = LoggerFactory.getLogger(PreferenceRecommendationService.class);
     private static final int RECOMMENDATION_LIMIT = 10;
 
     private final UserRepository userRepository;
@@ -35,11 +35,11 @@ public class PreferenceRecommendationAsyncService {
     private final RecommendationRepository recommendationRepository;
     private final RestClient arbitAiRestClient;
 
-    public PreferenceRecommendationAsyncService(UserRepository userRepository,
-                                                EventRepository eventRepository,
-                                                RecommendationRepository recommendationRepository,
-                                                RestClient.Builder restClientBuilder,
-                                                ArbitAiProperties arbitAiProperties) {
+    public PreferenceRecommendationService(UserRepository userRepository,
+                                           EventRepository eventRepository,
+                                           RecommendationRepository recommendationRepository,
+                                           RestClient.Builder restClientBuilder,
+                                           ArbitAiProperties arbitAiProperties) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.recommendationRepository = recommendationRepository;
@@ -48,10 +48,10 @@ public class PreferenceRecommendationAsyncService {
                 .build();
     }
 
-    @Async
     @Transactional
     public void createRecommendations(UUID userId, List<UUID> eventIds) {
-        log.info("Async recommendation creation started. userId={}, inputEventCount={}", userId, eventIds.size());
+        log.info("Recommendation creation started. userId={}, inputEventCount={}, eventIds={}",
+                userId, eventIds.size(), eventIds);
         try {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -74,17 +74,32 @@ public class PreferenceRecommendationAsyncService {
             recommendationRepository.deleteAllByUserId(userId);
             recommendationRepository.flush();
             recommendationRepository.saveAll(recommendations);
-            log.info("Async recommendation creation completed. userId={}, savedCount={}", userId, recommendations.size());
+            log.info("Recommendation creation completed. userId={}, savedCount={}", userId, recommendations.size());
+        } catch (RestClientResponseException exception) {
+            throw logAndWrapAiResponse(userId, eventIds, exception);
         } catch (RestClientException | IllegalArgumentException exception) {
-            throw logAndWrap(userId, exception);
+            throw logAndWrap(userId, eventIds, exception);
         } catch (RuntimeException exception) {
-            log.error("Async recommendation creation failed. userId={}", userId, exception);
+            log.error("Recommendation creation failed. userId={}, eventIds={}", userId, eventIds, exception);
             throw exception;
         }
     }
 
-    private BusinessException logAndWrap(UUID userId, RuntimeException exception) {
-        log.error("Async recommendation creation failed. userId={}", userId, exception);
+    private BusinessException logAndWrapAiResponse(UUID userId, List<UUID> eventIds,
+                                                   RestClientResponseException exception) {
+        log.error(
+                "AI recommendation request failed. userId={}, eventIds={}, statusCode={}, responseBody={}",
+                userId,
+                eventIds,
+                exception.getStatusCode(),
+                exception.getResponseBodyAsString(),
+                exception
+        );
+        return new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to create recommendations.");
+    }
+
+    private BusinessException logAndWrap(UUID userId, List<UUID> eventIds, RuntimeException exception) {
+        log.error("Recommendation creation failed. userId={}, eventIds={}", userId, eventIds, exception);
         return new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to create recommendations.");
     }
 

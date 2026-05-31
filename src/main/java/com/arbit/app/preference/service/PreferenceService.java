@@ -7,7 +7,11 @@ import com.arbit.app.user.repository.UserRepository;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadLocalRandom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -15,21 +19,25 @@ import org.springframework.web.client.RestClientException;
 @Service
 public class PreferenceService {
 
+    private static final Logger log = LoggerFactory.getLogger(PreferenceService.class);
     private static final int SEED_EVENT_SAMPLE_SIZE = 10;
     private static final int RANDOM_STATE_BOUND = 1_000_000;
     private static final String DEFAULT_POSTER_IMAGE_URL =
             "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png";
 
     private final UserRepository userRepository;
-    private final PreferenceRecommendationAsyncService recommendationAsyncService;
+    private final PreferenceRecommendationService recommendationService;
+    private final Executor recommendationTaskExecutor;
     private final RestClient arbitAiRestClient;
 
     public PreferenceService(UserRepository userRepository,
-                             PreferenceRecommendationAsyncService recommendationAsyncService,
+                             PreferenceRecommendationService recommendationService,
+                             @Qualifier("recommendationTaskExecutor") Executor recommendationTaskExecutor,
                              RestClient.Builder restClientBuilder,
                              ArbitAiProperties arbitAiProperties) {
         this.userRepository = userRepository;
-        this.recommendationAsyncService = recommendationAsyncService;
+        this.recommendationService = recommendationService;
+        this.recommendationTaskExecutor = recommendationTaskExecutor;
         this.arbitAiRestClient = restClientBuilder
                 .baseUrl(arbitAiProperties.baseUrl())
                 .build();
@@ -73,7 +81,15 @@ public class PreferenceService {
         userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
-        recommendationAsyncService.createRecommendations(userId, List.copyOf(eventIds));
+        List<UUID> requestedEventIds = List.copyOf(eventIds);
+        recommendationTaskExecutor.execute(() -> {
+            try {
+                recommendationService.createRecommendations(userId, requestedEventIds);
+            } catch (RuntimeException exception) {
+                log.error("Recommendation background task failed. userId={}, eventIds={}",
+                        userId, requestedEventIds, exception);
+            }
+        });
     }
 
     private record SeedEventsResponse(
