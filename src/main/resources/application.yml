@@ -1,6 +1,8 @@
 spring:
   application:
     name: arbit
+  config:
+    import: optional:file:.env[.properties]
   datasource:
     url: ${GCP_DB_URL}
     username: ${GCP_DB_USERNAME}

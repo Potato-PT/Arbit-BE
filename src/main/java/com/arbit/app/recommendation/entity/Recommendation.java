@@ -42,7 +42,7 @@ public class Recommendation extends BaseTimeEntity {
     @Column(name = "match_score", nullable = false, precision = 5, scale = 2)
     private BigDecimal matchScore;
 
-    @Column(nullable = false, length = 200)
+    @Column(nullable = false, length = 500)
     private String reason;
 
     @Builder

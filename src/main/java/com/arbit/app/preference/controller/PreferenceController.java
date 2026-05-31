@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,61 +46,61 @@ public class PreferenceController {
                                                       "success": true,
                                                       "data": [
                                                         {
-                                                          "event_id": 0,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440000",
                                                           "title": "Seoul Media Art Exhibition",
                                                           "genre": "exhibition",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 12,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440001",
                                                           "title": "Modern Art Showcase",
                                                           "genre": "exhibition",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 34,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440002",
                                                           "title": "Indie Band Live",
                                                           "genre": "concert",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 56,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440003",
                                                           "title": "Classical Night",
                                                           "genre": "concert",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 78,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440004",
                                                           "title": "Theater Festival",
                                                           "genre": "performance",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 90,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440005",
                                                           "title": "Dance Performance",
                                                           "genre": "performance",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 101,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440006",
                                                           "title": "Design Fair",
                                                           "genre": "exhibition",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 122,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440007",
                                                           "title": "Jazz Evening",
                                                           "genre": "concert",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 145,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440008",
                                                           "title": "Family Musical",
                                                           "genre": "performance",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
                                                         },
                                                         {
-                                                          "event_id": 167,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440009",
                                                           "title": "Photo Archive",
                                                           "genre": "exhibition",
                                                           "posterImage": "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png"
@@ -121,7 +122,7 @@ public class PreferenceController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "취향 입력",
-            description = "Stores the authenticated user's selected categories and taste keywords after signup.",
+            description = "Accepts selected seed event IDs and starts personalized recommendation creation asynchronously for the authenticated user.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
@@ -132,10 +133,11 @@ public class PreferenceController {
                                             {
                                               "success": true,
                                               "data": [
-                                                0,
-                                                12,
-                                                34,
-                                                56
+                                                "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb",
+                                                "f4efcbce-3fa3-4499-ae23-25503a9f5af7",
+                                                "dc923df1-f64d-4be2-90db-279e9f822da3",
+                                                "c8ce590a-491a-4d78-a2e5-f2a53e8a3ed4",
+                                                "794027ef-3be7-404c-890f-3fe3b9eef0cb"
                                               ],
                                               "error": null
                                             }
@@ -146,7 +148,7 @@ public class PreferenceController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "Selected event identifiers received successfully",
+                            description = "Preference request accepted. Personalized recommendations will be created and stored asynchronously",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = CreatePreferenceApiResponse.class),
@@ -155,10 +157,11 @@ public class PreferenceController {
                                                     {
                                                       "success": true,
                                                       "data": [
-                                                        0,
-                                                        12,
-                                                        34,
-                                                        56
+                                                        "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb",
+                                                        "f4efcbce-3fa3-4499-ae23-25503a9f5af7",
+                                                        "dc923df1-f64d-4be2-90db-279e9f822da3",
+                                                        "c8ce590a-491a-4d78-a2e5-f2a53e8a3ed4",
+                                                        "794027ef-3be7-404c-890f-3fe3b9eef0cb"
                                                       ],
                                                       "error": null
                                                     }
@@ -170,9 +173,9 @@ public class PreferenceController {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication is required")
             }
     )
-    public ApiResponse<List<Integer>> createPreferences(
+    public ApiResponse<List<UUID>> createPreferences(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody ApiResponse<List<Integer>> request) {
+            @RequestBody ApiResponse<List<UUID>> request) {
         preferenceService.createPreferences(userDetails.id(), request.data());
         return ApiResponse.success(request.data());
     }
@@ -187,8 +190,8 @@ public class PreferenceController {
 
     private record CreatePreferenceApiResponse(
             boolean success,
-            @ArraySchema(schema = @Schema(type = "integer", example = "12"))
-            List<Integer> data,
+            @ArraySchema(schema = @Schema(type = "string", format = "uuid", example = "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb"))
+            List<UUID> data,
             Object error
     ) {
     }
