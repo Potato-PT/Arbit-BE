@@ -24,7 +24,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/signup",
             "/api/auth/login",
             "/api/home",
-            "/api/preferences/categories"
+            "/api/preferences/categories",
+            "/api/events"
     );
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -37,7 +38,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return EXCLUDED_PATHS.contains(request.getServletPath());
+        String servletPath = request.getServletPath();
+        return EXCLUDED_PATHS.contains(servletPath) || servletPath.startsWith("/api/events/");
     }
 
     @Override
