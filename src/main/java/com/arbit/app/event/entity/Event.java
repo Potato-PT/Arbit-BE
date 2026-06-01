@@ -106,4 +106,13 @@ public class Event extends BaseTimeEntity {
     public void updateAverageRating(BigDecimal averageRating) {
         this.averageRating = averageRating;
     }
+
+    public boolean updateStatus(LocalDate today) {
+        EventStatus newStatus = EventStatus.from(startDate, endDate, today);
+        if (status == newStatus) {
+            return false;
+        }
+        this.status = newStatus;
+        return true;
+    }
 }

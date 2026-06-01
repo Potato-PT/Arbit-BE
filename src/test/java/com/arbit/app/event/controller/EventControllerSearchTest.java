@@ -3,18 +3,25 @@ package com.arbit.app.event.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.arbit.app.event.dto.EventSearchResultsResponse;
+import com.arbit.app.event.dto.EventSearchSort;
+import com.arbit.app.event.dto.EventSearchSuggestionsResponse;
+import com.arbit.app.event.dto.EventSearchTarget;
 import com.arbit.app.event.entity.EventStatus;
+import com.arbit.app.event.service.EventSearchService;
 import com.arbit.app.event.service.EventService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -32,13 +39,81 @@ class EventControllerSearchTest {
     @Mock
     private EventService eventService;
 
+    @Mock
+    private EventSearchService eventSearchService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new EventController(eventService)).build();
-        when(eventService.getEvents(any(), any(), any(), any(), anyString(), any(EventStatus.class)))
+        mockMvc = MockMvcBuilders.standaloneSetup(new EventController(eventService, eventSearchService)).build();
+        lenient().when(eventService.getEvents(any(), any(), any(), any(), anyString(), any(EventStatus.class)))
                 .thenReturn(List.of());
+    }
+
+    @Test
+    void suggestEventsUsesSearchServiceAndWrapsApiResponse() throws Exception {
+        when(eventSearchService.getSuggestions("악뮤", EventSearchTarget.ALL, 10))
+                .thenReturn(new EventSearchSuggestionsResponse("악뮤", EventSearchTarget.ALL, List.of()));
+
+        mockMvc.perform(get("/api/events/search/suggestions")
+                        .param("keyword", "악뮤")
+                        .param("target", "ALL")
+                        .param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.keyword").value("악뮤"))
+                .andExpect(jsonPath("$.data.target").value("ALL"))
+                .andExpect(jsonPath("$.data.suggestions").isArray());
+
+        verify(eventSearchService).getSuggestions("악뮤", EventSearchTarget.ALL, 10);
+    }
+
+    @Test
+    void searchEventsUsesSearchServiceAndWrapsPagedResult() throws Exception {
+        when(eventSearchService.search(
+                "악뮤",
+                EventSearchTarget.ALL,
+                "콘서트",
+                List.of("송파구"),
+                EventStatus.ONGOING,
+                false,
+                EventSearchSort.deadline,
+                null,
+                null,
+                0,
+                20
+        )).thenReturn(new EventSearchResultsResponse("악뮤", EventSearchTarget.ALL, 0, 20, 0, 0, List.of()));
+
+        mockMvc.perform(get("/api/events/search")
+                        .param("keyword", "악뮤")
+                        .param("target", "ALL")
+                        .param("category", "콘서트")
+                        .param("district", "송파구")
+                        .param("status", "ONGOING")
+                        .param("free", "false")
+                        .param("sort", "deadline")
+                        .param("page", "0")
+                        .param("size", "20"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.keyword").value("악뮤"))
+                .andExpect(jsonPath("$.data.target").value("ALL"))
+                .andExpect(jsonPath("$.data.items").isArray());
+
+        verify(eventSearchService).search(
+                "악뮤",
+                EventSearchTarget.ALL,
+                "콘서트",
+                List.of("송파구"),
+                EventStatus.ONGOING,
+                false,
+                EventSearchSort.deadline,
+                null,
+                null,
+                0,
+                20
+        );
     }
 
     @ParameterizedTest(name = "{index}. {0}")

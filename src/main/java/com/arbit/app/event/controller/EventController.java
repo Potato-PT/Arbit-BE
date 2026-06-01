@@ -4,7 +4,12 @@ import com.arbit.app.auth.security.CustomUserDetails;
 import com.arbit.app.common.response.ApiResponse;
 import com.arbit.app.event.dto.EventDetailResponse;
 import com.arbit.app.event.dto.EventResponse;
+import com.arbit.app.event.dto.EventSearchResultsResponse;
+import com.arbit.app.event.dto.EventSearchSort;
+import com.arbit.app.event.dto.EventSearchSuggestionsResponse;
+import com.arbit.app.event.dto.EventSearchTarget;
 import com.arbit.app.event.entity.EventStatus;
+import com.arbit.app.event.service.EventSearchService;
 import com.arbit.app.event.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,94 +34,44 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/events")
-@Tag(name = "이벤트", description = "전시, 공연, 행사 검색 및 조회 API")
+@Tag(name = "Events", description = "Event lookup and search APIs")
 public class EventController {
 
     private static final Logger log = LoggerFactory.getLogger(EventController.class);
 
     private final EventService eventService;
+    private final EventSearchService eventSearchService;
 
-    public EventController(EventService eventService) {
+    public EventController(EventService eventService, EventSearchService eventSearchService) {
         this.eventService = eventService;
+        this.eventSearchService = eventSearchService;
     }
 
     @GetMapping("/{eventId}")
     @Operation(
-            summary = "이벤트 상세 조회",
+            summary = "Get event detail",
             description = """
                     Returns the full detail of a single event by its ID.
-                    Used when a user taps an event card to view its detail page.
-
-                    status is computed server-side from today's date:
-                    - ONGOING: startDate <= today <= endDate
-                    - UPCOMING: startDate > today
-
-                    bookmarked reflects the authenticated user's bookmark state.
-                    For unauthenticated requests, bookmarked is always false.
+                    Use this endpoint after the user selects an item from search suggestions or results.
                     """,
-            parameters = {
-                    @Parameter(
-                            name = "eventId",
-                            in = ParameterIn.PATH,
-                            description = "Event UUID",
-                            required = true,
-                            schema = @Schema(type = "string", format = "uuid"),
-                            example = "550e8400-e29b-41d4-a716-446655440000"
-                    )
-            },
+            parameters = @Parameter(
+                    name = "eventId",
+                    in = ParameterIn.PATH,
+                    description = "Event UUID",
+                    required = true,
+                    schema = @Schema(type = "string", format = "uuid"),
+                    example = "550e8400-e29b-41d4-a716-446655440000"
+            ),
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
                             description = "Event detail retrieved successfully",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(implementation = EventDetailApiResponse.class),
-                                    examples = @ExampleObject(
-                                            value = """
-                                                    {
-                                                      "success": true,
-                                                      "data": {
-                                                        "title": "Echoes of Silence",
-                                                        "category": "Media Art",
-                                                        "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
-                                                        "url": "https://example.com/events/echoes-of-silence",
-                                                        "district": "Jongno-gu",
-                                                        "venue": "Metropolitan Museum",
-                                                        "startDate": "2026-05-01",
-                                                        "endDate": "2026-06-30",
-                                                        "price": "전석 20,000",
-                                                        "time": "10:00 ~ 18:00 (입장마감 17:30)",
-                                                        "free": false,
-                                                        "keyword": ["회화", "개인전", "차분한"],
-                                                        "status": "ONGOING",
-                                                        "rating": 4.7,
-                                                        "bookmarked": true
-                                                      },
-                                                      "error": null
-                                                    }
-                                                    """
-                                    )
+                                    schema = @Schema(implementation = EventDetailApiResponse.class)
                             )
                     ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "404",
-                            description = "Event not found",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(
-                                            value = """
-                                                    {
-                                                      "success": false,
-                                                      "data": null,
-                                                      "error": {
-                                                        "code": "EVENT_NOT_FOUND",
-                                                        "message": "Event not found."
-                                                      }
-                                                    }
-                                                    """
-                                    )
-                            )
-                    )
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Event not found")
             }
     )
     public ApiResponse<EventDetailResponse> getEventDetail(
@@ -127,46 +82,18 @@ public class EventController {
 
     @GetMapping
     @Operation(
-            summary = "이벤트 목록 조회",
+            summary = "Get event list",
             description = """
-                    Returns a filtered and sorted list of events for the 'View the entire performance' screen.
-                    All filter parameters are optional.
-                    When multiple filters are provided, only events matching all conditions are returned with AND logic.
-                    This endpoint does not have a search function.
-
-                    Filters:
-                    - category: single genre only
-                    - district: multiple borough values allowed
-                    - startDate: include only events whose startDate is on or after this date
-                    - endDate: include only events whose endDate is on or before this date
-
-                    Sorting:
-                    - match: preference match score descending, falls back to deadline for unauthenticated requests
-                    - deadline: endDate ascending
-                    - latest: startDate descending
-                    - rating: average user rating descending, unrated events last
-
-                    status is computed server-side:
-                    - ONGOING: startDate <= today <= endDate
-                    - UPCOMING: startDate > today
-
-                    bookmarked reflects the authenticated user's bookmark state.
-                    For unauthenticated requests, bookmarked is always false.
+                    Returns a filtered and sorted list of events for the event listing screen.
+                    This endpoint is separate from keyword search.
                     """,
             parameters = {
-                    @Parameter(
-                            name = "category",
-                            in = ParameterIn.QUERY,
-                            description = "Single genre only, for example 전시, 공연, 행사.",
-                            schema = @Schema(type = "string"),
-                            example = "전시"
-                    ),
+                    @Parameter(name = "category", in = ParameterIn.QUERY, description = "Single category filter."),
                     @Parameter(
                             name = "district",
                             in = ParameterIn.QUERY,
-                            description = "Borough-level region. Multiple values allowed by repeating the query parameter.",
-                            array = @ArraySchema(schema = @Schema(type = "string")),
-                            examples = @ExampleObject(name = "multi", value = "[\"Mapo-gu\", \"Jongno-gu\"]")
+                            description = "District filters. Multiple values allowed by repeating the query parameter.",
+                            array = @ArraySchema(schema = @Schema(type = "string"))
                     ),
                     @Parameter(
                             name = "startDate",
@@ -185,47 +112,15 @@ public class EventController {
                     @Parameter(
                             name = "sort",
                             in = ParameterIn.QUERY,
-                            description = "Determines the order of results. Single value only. Defaults to deadline.",
-                            schema = @Schema(type = "string", allowableValues = {"match", "deadline", "latest", "rating"}, defaultValue = "deadline"),
-                            example = "deadline"
+                            description = "Sort option. Defaults to deadline.",
+                            schema = @Schema(type = "string", allowableValues = {"match", "deadline", "latest", "rating"}, defaultValue = "deadline")
                     )
             },
-            responses = {
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
-                            description = "Filtered and sorted event list retrieved successfully",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = EventsApiResponse.class),
-                                    examples = @ExampleObject(
-                                            value = """
-                                                    {
-                                                      "success": true,
-                                                      "data": [
-                                                        {
-                                                          "title": "Echoes of Silence",
-                                                          "category": "Media Art",
-                                                          "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
-                                                          "url": "https://example.com/events/echoes-of-silence",
-                                                          "district": "Jongno-gu",
-                                                          "venue": "Metropolitan Museum",
-                                                          "startDate": "2026-05-01",
-                                                          "endDate": "2026-06-30",
-                                                          "free": false,
-                                                          "status": "ONGOING",
-                                                          "distance": "1.2km",
-                                                          "rating": 4.1,
-                                                          "bookmarked": true,
-                                                          "createdAt": "2026-05-01"
-                                                        }
-                                                      ],
-                                                      "error": null
-                                                    }
-                                                    """
-                                    )
-                            )
-                    )
-            }
+            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Event list retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventsApiResponse.class))
+            )
     )
     public ApiResponse<List<EventResponse>> getEvents(
             @RequestParam(required = false) String category,
@@ -239,95 +134,126 @@ public class EventController {
         return ApiResponse.success(eventService.getEvents(category, district, startDate, endDate, sort, status));
     }
 
-    @GetMapping("/search")
+    @GetMapping("/search/suggestions")
     @Operation(
-            summary = "이벤트 검색",
+            summary = "Event search suggestions",
             description = """
-                    Returns a filtered and sorted list of events.
-                    All filter parameters are optional.
-                    When multiple filters are provided, only events matching all conditions are returned with AND logic.
-                    The frontend accumulates selected filters and re-requests this endpoint each time the user changes a filter option.
-
-                    Query parameters:
-                    - title: search keyword matched against event title
-                    - category: single genre only
-                    - district: borough-level region, multiple values allowed
-                    - status: ONGOING or UPCOMING, multiple values allowed
-                    - free: true for free events, false for paid, multiple values allowed
-                    - sort: distance, deadline, or upcoming. Default is deadline
-                    - lat: user latitude, required when sort=distance
-                    - lng: user longitude, required when sort=distance
-
-                    Sort behavior:
-                    - deadline: endDate ascending
-                    - upcoming: startDate ascending
-                    - distance: calculated distance from user's coordinates ascending
-
-                    status is computed server-side:
-                    - ONGOING: startDate <= today <= endDate
-                    - UPCOMING: startDate > today
-
-                    distance is computed server-side when lat and lng are provided; otherwise null.
-                    bookmarked reflects the authenticated user's bookmark state.
-                    For unauthenticated requests, bookmarked is always false.
+                    Returns lightweight event suggestions for search input autocomplete and preview cards.
+                    Use GET /api/events/{eventId} when the user selects a suggestion and needs full detail.
                     """,
             parameters = {
                     @Parameter(
-                            name = "title",
+                            name = "keyword",
                             in = ParameterIn.QUERY,
-                            description = "Search keyword matched against event title. Single value only.",
+                            description = "Search keyword.",
+                            required = true,
                             schema = @Schema(type = "string"),
-                            example = "모네"
+                            example = "국악위크"
                     ),
                     @Parameter(
-                            name = "category",
+                            name = "target",
                             in = ParameterIn.QUERY,
-                            description = "Single genre only, for example 전시, 공연, 행사.",
-                            schema = @Schema(type = "string"),
-                            example = "전시"
+                            description = "Field to search. Defaults to ALL.",
+                            schema = @Schema(type = "string", allowableValues = {"ALL", "TITLE", "CATEGORY", "VENUE", "DISTRICT", "KEYWORD"}, defaultValue = "ALL"),
+                            example = "ALL"
                     ),
+                    @Parameter(
+                            name = "limit",
+                            in = ParameterIn.QUERY,
+                            description = "Maximum suggestions to return. Defaults to 10, max 20.",
+                            schema = @Schema(type = "integer", defaultValue = "10", maximum = "20"),
+                            example = "10"
+                    )
+            },
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Search suggestions retrieved successfully",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = SearchSuggestionsApiResponse.class),
+                                    examples = @ExampleObject(value = """
+                                            {
+                                              "success": true,
+                                              "data": {
+                                                "keyword": "국악위크",
+                                                "target": "ALL",
+                                                "suggestions": [
+                                                  {
+                                                    "event_id": "de4693dd-7196-4298-9bd9-c6c2a597b6b6",
+                                                    "title": "[서울남산국악당] 2026 남산 국악위크 [Vocal Space '조각눈']",
+                                                    "category": "국악",
+                                                    "venue": "서울남산국악당 크라운해태홀",
+                                                    "district": "중구",
+                                                    "startDate": "2026-06-06",
+                                                    "endDate": "2026-06-06",
+                                                    "posterImageUrl": "https://culture.seoul.go.kr/cmmn/file/getImage.do?atchFileId=3f3433c726c34bfbbca16ea200f7cb86&thumb=Y",
+                                                    "price": "전석 30,000원",
+                                                    "free": false,
+                                                    "status": "UPCOMING",
+                                                    "matchedField": "TITLE",
+                                                    "highlightText": "[서울남산국악당] 2026 남산 국악위크 [Vocal Space '조각눈']"
+                                                  }
+                                                ]
+                                              },
+                                              "error": null
+                                            }
+                                            """)
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
+            }
+    )
+    public ApiResponse<EventSearchSuggestionsResponse> suggestEvents(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "ALL") EventSearchTarget target,
+            @RequestParam(required = false) Integer limit) {
+        return ApiResponse.success(eventSearchService.getSuggestions(keyword, target, limit));
+    }
+
+    @GetMapping("/search")
+    @Operation(
+            summary = "Event search results",
+            description = """
+                    Returns paged event search results when the user submits a search.
+                    All filters are optional except lat and lng, which are required when sort=distance.
+                    """,
+            parameters = {
+                    @Parameter(name = "keyword", in = ParameterIn.QUERY, description = "Search keyword.", example = "악뮤"),
+                    @Parameter(
+                            name = "target",
+                            in = ParameterIn.QUERY,
+                            description = "Field to search. Defaults to ALL.",
+                            schema = @Schema(type = "string", allowableValues = {"ALL", "TITLE", "CATEGORY", "VENUE", "DISTRICT", "KEYWORD"}, defaultValue = "ALL"),
+                            example = "ALL"
+                    ),
+                    @Parameter(name = "category", in = ParameterIn.QUERY, description = "Single category filter.", example = "콘서트"),
                     @Parameter(
                             name = "district",
                             in = ParameterIn.QUERY,
-                            description = "Borough-level region. Multiple values allowed by repeating the query parameter.",
+                            description = "District filters. Multiple values allowed by repeating the query parameter.",
                             array = @ArraySchema(schema = @Schema(type = "string")),
-                            examples = @ExampleObject(name = "multi", value = "[\"Mapo-gu\", \"Jongno-gu\"]")
+                            examples = @ExampleObject(name = "multi", value = "[\"송파구\", \"마포구\"]")
                     ),
                     @Parameter(
                             name = "status",
                             in = ParameterIn.QUERY,
-                            description = "Allowed values: ONGOING or UPCOMING. Multiple values allowed by repeating the query parameter.",
-                            array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"ONGOING", "UPCOMING"})),
-                            examples = @ExampleObject(name = "multi", value = "[\"ONGOING\", \"UPCOMING\"]")
+                            description = "Event status filter.",
+                            schema = @Schema(type = "string", allowableValues = {"ONGOING", "UPCOMING", "CLOSED"}),
+                            example = "ONGOING"
                     ),
-                    @Parameter(
-                            name = "free",
-                            in = ParameterIn.QUERY,
-                            description = "true for free events, false for paid. Multiple values allowed by repeating the query parameter.",
-                            array = @ArraySchema(schema = @Schema(type = "boolean")),
-                            examples = @ExampleObject(name = "multi", value = "[true, false]")
-                    ),
+                    @Parameter(name = "free", in = ParameterIn.QUERY, description = "true for free events, false for paid events.", example = "false"),
                     @Parameter(
                             name = "sort",
                             in = ParameterIn.QUERY,
-                            description = "Sort option. Single value only. Default is deadline.",
-                            schema = @Schema(type = "string", allowableValues = {"distance", "deadline", "upcoming"}, defaultValue = "deadline"),
+                            description = "Sort option. Defaults to deadline.",
+                            schema = @Schema(type = "string", allowableValues = {"deadline", "latest", "rating", "distance"}, defaultValue = "deadline"),
                             example = "deadline"
                     ),
-                    @Parameter(
-                            name = "lat",
-                            in = ParameterIn.QUERY,
-                            description = "User latitude. Required when sort=distance.",
-                            schema = @Schema(type = "number", format = "float"),
-                            example = "37.5665"
-                    ),
-                    @Parameter(
-                            name = "lng",
-                            in = ParameterIn.QUERY,
-                            description = "User longitude. Required when sort=distance.",
-                            schema = @Schema(type = "number", format = "float"),
-                            example = "126.9780"
-                    )
+                    @Parameter(name = "lat", in = ParameterIn.QUERY, description = "User latitude. Required when sort=distance.", example = "37.5665"),
+                    @Parameter(name = "lng", in = ParameterIn.QUERY, description = "User longitude. Required when sort=distance.", example = "126.9780"),
+                    @Parameter(name = "page", in = ParameterIn.QUERY, description = "Page number. Defaults to 0.", example = "0"),
+                    @Parameter(name = "size", in = ParameterIn.QUERY, description = "Page size. Defaults to 20.", example = "20")
             },
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -336,54 +262,62 @@ public class EventController {
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = SearchEventsApiResponse.class),
-                                    examples = @ExampleObject(
-                                            value = """
-                                                    {
-                                                      "success": true,
-                                                      "data": [
-                                                        {
-                                                          "title": "Echoes of Silence",
-                                                          "category": "Media Art",
-                                                          "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
-                                                          "url": "https://example.com/events/echoes-of-silence",
-                                                          "district": "Jongno-gu",
-                                                          "venue": "Metropolitan Museum",
-                                                          "startDate": "2026-05-01",
-                                                          "endDate": "2026-06-30",
-                                                          "free": false,
-                                                          "status": "ONGOING",
-                                                          "distance": "1.2km",
-                                                          "bookmarked": true
-                                                        }
-                                                      ],
-                                                      "error": null
-                                                    }
-                                                    """
-                                    )
+                                    examples = @ExampleObject(value = """
+                                            {
+                                              "success": true,
+                                              "data": {
+                                                "keyword": "악뮤",
+                                                "target": "ALL",
+                                                "page": 0,
+                                                "size": 20,
+                                                "totalElements": 1,
+                                                "totalPages": 1,
+                                                "items": [
+                                                  {
+                                                    "event_id": "550e8400-e29b-41d4-a716-446655440000",
+                                                    "title": "악뮤 콘서트 LOVE EPISODE",
+                                                    "category": "콘서트",
+                                                    "posterImageUrl": "https://cdn.arbit.app/events/akmu/poster.jpg",
+                                                    "venue": "올림픽공원",
+                                                    "district": "송파구",
+                                                    "startDate": "2026-06-03",
+                                                    "endDate": "2026-06-30",
+                                                    "free": false,
+                                                    "price": "18,600원",
+                                                    "status": "ONGOING",
+                                                    "averageRating": 4.7
+                                                  }
+                                                ]
+                                              },
+                                              "error": null
+                                            }
+                                            """)
                             )
-                    )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request")
             }
     )
-    public ApiResponse<List<EventResponse>> searchEvents(
-            @Parameter(hidden = true)
-            @RequestParam(defaultValue = "ONGOING") EventStatus status) {
-        return ApiResponse.success(eventService.getEvents(null, null, null, null, "deadline", status));
+    public ApiResponse<EventSearchResultsResponse> searchEvents(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "ALL") EventSearchTarget target,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) List<String> district,
+            @RequestParam(required = false) EventStatus status,
+            @RequestParam(required = false) Boolean free,
+            @RequestParam(defaultValue = "deadline") EventSearchSort sort,
+            @RequestParam(required = false) Double lat,
+            @RequestParam(required = false) Double lng,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "20") Integer size) {
+        return ApiResponse.success(eventSearchService.search(
+                keyword, target, category, district, status, free, sort, lat, lng, page, size));
     }
 
     @Schema(description = "Wrapped event list response")
     private record EventsApiResponse(
             boolean success,
-            @ArraySchema(schema = @Schema(implementation = EventSwaggerItem.class))
-            List<EventSwaggerItem> data,
-            Object error
-    ) {
-    }
-
-    @Schema(description = "Wrapped event search response")
-    private record SearchEventsApiResponse(
-            boolean success,
-            @ArraySchema(schema = @Schema(implementation = SearchEventSwaggerItem.class))
-            List<SearchEventSwaggerItem> data,
+            @ArraySchema(schema = @Schema(implementation = EventResponse.class))
+            List<EventResponse> data,
             Object error
     ) {
     }
@@ -397,39 +331,21 @@ public class EventController {
     ) {
     }
 
-    @Schema(description = "Event item used in list results")
-    private record EventSwaggerItem(
-            String title,
-            String category,
-            String posterImageUrl,
-            String url,
-            String district,
-            String venue,
-            LocalDate startDate,
-            LocalDate endDate,
-            boolean free,
-            String status,
-            String distance,
-            Double rating,
-            boolean bookmarked,
-            LocalDate createdAt
+    @Schema(description = "Wrapped event search suggestions response")
+    private record SearchSuggestionsApiResponse(
+            boolean success,
+            @Schema(implementation = EventSearchSuggestionsResponse.class)
+            EventSearchSuggestionsResponse data,
+            Object error
     ) {
     }
 
-    @Schema(description = "Event item used in search results")
-    private record SearchEventSwaggerItem(
-            String title,
-            String category,
-            String posterImageUrl,
-            String url,
-            String district,
-            String venue,
-            LocalDate startDate,
-            LocalDate endDate,
-            boolean free,
-            String status,
-            String distance,
-            boolean bookmarked
+    @Schema(description = "Wrapped event search response")
+    private record SearchEventsApiResponse(
+            boolean success,
+            @Schema(implementation = EventSearchResultsResponse.class)
+            EventSearchResultsResponse data,
+            Object error
     ) {
     }
 }

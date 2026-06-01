@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.arbit.app.auth.security.CustomUserDetails;
 import com.arbit.app.event.dto.EventDetailResponse;
 import com.arbit.app.event.entity.EventStatus;
+import com.arbit.app.event.service.EventSearchService;
 import com.arbit.app.event.service.EventService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -34,6 +35,9 @@ class EventControllerDetailTest {
     @Mock
     private EventService eventService;
 
+    @Mock
+    private EventSearchService eventSearchService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -41,7 +45,7 @@ class EventControllerDetailTest {
         ObjectMapper objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        mockMvc = MockMvcBuilders.standaloneSetup(new EventController(eventService))
+        mockMvc = MockMvcBuilders.standaloneSetup(new EventController(eventService, eventSearchService))
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
                 .build();
     }
@@ -50,6 +54,7 @@ class EventControllerDetailTest {
     void getEventDetailReturnsSwaggerDataFields() throws Exception {
         UUID eventId = UUID.fromString("550e8400-e29b-41d4-a716-446655440000");
         EventDetailResponse response = new EventDetailResponse(
+                eventId,
                 "Echoes of Silence",
                 "Media Art",
                 "https://cdn.arbit.app/events/light-museum/poster.jpg",
@@ -71,6 +76,7 @@ class EventControllerDetailTest {
         mockMvc.perform(get("/api/events/{eventId}", eventId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.event_id").value(eventId.toString()))
                 .andExpect(jsonPath("$.data.title").value("Echoes of Silence"))
                 .andExpect(jsonPath("$.data.category").value("Media Art"))
                 .andExpect(jsonPath("$.data.posterImageUrl").value("https://cdn.arbit.app/events/light-museum/poster.jpg"))

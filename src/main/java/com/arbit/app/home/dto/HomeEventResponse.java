@@ -2,11 +2,17 @@ package com.arbit.app.home.dto;
 
 import com.arbit.app.event.entity.Event;
 import com.arbit.app.event.entity.EventStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Schema(description = "Home event item")
 public record HomeEventResponse(
+        @JsonProperty("event_id")
+        @Schema(description = "Event UUID", example = "550e8400-e29b-41d4-a716-446655440000")
+        UUID eventId,
+
         @Schema(description = "Event title", example = "Echoes of Silence")
         String title,
 
@@ -37,6 +43,7 @@ public record HomeEventResponse(
 
     public static HomeEventResponse from(Event event) {
         return new HomeEventResponse(
+                event.getId(),
                 event.getTitle(),
                 event.getCategory().getName(),
                 event.getPosterImageUrl(),

@@ -178,6 +178,7 @@ public class UserMeController {
                                                       "success": true,
                                                       "data": [
                                                         {
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440000",
                                                           "title": "Echoes of Silence",
                                                           "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
                                                           "category": "Media Art",
@@ -219,6 +220,7 @@ public class UserMeController {
                                                       "data": [
                                                         {
                                                           "reviewId": 12,
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440000",
                                                           "title": "Echoes of Silence",
                                                           "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
                                                           "starScore": 5,

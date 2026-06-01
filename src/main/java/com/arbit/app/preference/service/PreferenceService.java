@@ -2,17 +2,26 @@ package com.arbit.app.preference.service;
 
 import com.arbit.app.common.exception.BusinessException;
 import com.arbit.app.common.exception.ErrorCode;
+import com.arbit.app.event.entity.Event;
+import com.arbit.app.event.repository.EventRepository;
 import com.arbit.app.preference.dto.PreferenceCategoriesResponse;
+import com.arbit.app.preference.entity.UserPreferenceEvent;
+import com.arbit.app.preference.repository.UserPreferenceEventRepository;
+import com.arbit.app.user.entity.User;
 import com.arbit.app.user.repository.UserRepository;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -22,20 +31,24 @@ public class PreferenceService {
     private static final Logger log = LoggerFactory.getLogger(PreferenceService.class);
     private static final int SEED_EVENT_SAMPLE_SIZE = 10;
     private static final int RANDOM_STATE_BOUND = 1_000_000;
-    private static final String DEFAULT_POSTER_IMAGE_URL =
-            "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png";
 
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
+    private final UserPreferenceEventRepository userPreferenceEventRepository;
     private final PreferenceRecommendationService recommendationService;
     private final Executor recommendationTaskExecutor;
     private final RestClient arbitAiRestClient;
 
     public PreferenceService(UserRepository userRepository,
+                             EventRepository eventRepository,
+                             UserPreferenceEventRepository userPreferenceEventRepository,
                              PreferenceRecommendationService recommendationService,
                              @Qualifier("recommendationTaskExecutor") Executor recommendationTaskExecutor,
                              RestClient.Builder restClientBuilder,
                              ArbitAiProperties arbitAiProperties) {
         this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
+        this.userPreferenceEventRepository = userPreferenceEventRepository;
         this.recommendationService = recommendationService;
         this.recommendationTaskExecutor = recommendationTaskExecutor;
         this.arbitAiRestClient = restClientBuilder
@@ -60,12 +73,14 @@ public class PreferenceService {
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
             }
 
+            Map<UUID, Event> localEvents = findLocalEvents(response.events());
+
             return response.events().stream()
                     .map(event -> new PreferenceCategoriesResponse(
                             event.eventId(),
                             event.title(),
                             event.genre(),
-                            DEFAULT_POSTER_IMAGE_URL
+                            posterImageUrlOf(localEvents, event.eventId())
                     ))
                     .toList();
         } catch (RestClientException | IllegalArgumentException exception) {
@@ -73,15 +88,17 @@ public class PreferenceService {
         }
     }
 
+    @Transactional
     public void createPreferences(UUID userId, List<UUID> eventIds) {
         if (eventIds == null || eventIds.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
 
-        userRepository.findById(userId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
 
         List<UUID> requestedEventIds = List.copyOf(eventIds);
+        savePreferenceEvents(user, requestedEventIds);
         recommendationTaskExecutor.execute(() -> {
             try {
                 recommendationService.createRecommendations(userId, requestedEventIds);
@@ -90,6 +107,37 @@ public class PreferenceService {
                         userId, requestedEventIds, exception);
             }
         });
+    }
+
+    private Map<UUID, Event> findLocalEvents(List<SeedEvent> seedEvents) {
+        List<UUID> eventIds = seedEvents.stream()
+                .map(SeedEvent::eventId)
+                .distinct()
+                .toList();
+
+        return eventRepository.findAllById(eventIds).stream()
+                .collect(Collectors.toMap(
+                        Event::getId,
+                        Function.identity(),
+                        (first, ignored) -> first
+                ));
+    }
+
+    private String posterImageUrlOf(Map<UUID, Event> localEvents, UUID eventId) {
+        Event event = localEvents.get(eventId);
+        return event == null ? null : event.getPosterImageUrl();
+    }
+
+    private void savePreferenceEvents(User user, List<UUID> eventIds) {
+        userPreferenceEventRepository.deleteAllByUserId(user.getId());
+        List<UserPreferenceEvent> preferenceEvents = eventIds.stream()
+                .distinct()
+                .map(eventId -> UserPreferenceEvent.builder()
+                        .user(user)
+                        .eventId(eventId)
+                        .build())
+                .toList();
+        userPreferenceEventRepository.saveAll(preferenceEvents);
     }
 
     private record SeedEventsResponse(

@@ -9,6 +9,7 @@ import com.arbit.app.common.exception.BusinessException;
 import com.arbit.app.common.exception.ErrorCode;
 import com.arbit.app.user.entity.User;
 import java.time.Year;
+import java.util.UUID;
 import com.arbit.app.user.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
+
+    private static final String GUEST_USERNAME_PREFIX = "guest_";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -68,6 +71,18 @@ public class AuthService {
         return issueTokens(request.username());
     }
 
+    @Transactional
+    public AuthResponse guestLogin() {
+        String username = generateGuestUsername();
+        String password = UUID.randomUUID().toString();
+        User user = User.builder()
+                .username(username)
+                .password(passwordEncoder.encode(password))
+                .build();
+        userRepository.save(user);
+        return issueTokens(user.getUsername());
+    }
+
     public void logout(CustomUserDetails userDetails) {
         if (userDetails == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
@@ -80,6 +95,14 @@ public class AuthService {
                 jwtTokenProvider.createAccessToken(username),
                 jwtTokenProvider.createRefreshToken(username)
         );
+    }
+
+    private String generateGuestUsername() {
+        String username;
+        do {
+            username = GUEST_USERNAME_PREFIX + UUID.randomUUID().toString().replace("-", "");
+        } while (userRepository.existsByUsername(username));
+        return username;
     }
 
     private int toAge(Integer birthYear) {

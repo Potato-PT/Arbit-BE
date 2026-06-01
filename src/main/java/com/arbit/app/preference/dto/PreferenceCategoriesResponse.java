@@ -16,7 +16,7 @@ public record PreferenceCategoriesResponse(
         @Schema(description = "Event genre", example = "exhibition")
         String genre,
 
-        @Schema(description = "Event poster image URL", example = "https://storage.googleapis.com/deepflow-image-storage/background-image/image_1.png")
+        @Schema(description = "Event poster image URL from the events table", example = "https://culture.seoul.go.kr/cmmn/file/getImage.do?atchFileId=3f3433c726c34bfbbca16ea200f7cb86&thumb=Y")
         String posterImage
 ) {
 }

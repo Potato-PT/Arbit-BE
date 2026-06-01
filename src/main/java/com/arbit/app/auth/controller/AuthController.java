@@ -125,6 +125,38 @@ public class AuthController {
         return ApiResponse.success(authService.login(request));
     }
 
+    @PostMapping("/guest-login")
+    @Operation(
+            summary = "Create a guest user and issue tokens.",
+            description = "Creates a guest user with a server-generated random username and password, then returns JWT tokens. No request body is required.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Guest user was created and tokens were issued.",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = AuthApiResponse.class),
+                                    examples = @ExampleObject(
+                                            name = "Guest Login Response",
+                                            value = """
+                                                    {
+                                                      "success": true,
+                                                      "data": {
+                                                        "accessToken": "eyJhbGciOiJIUzI1NiJ9.access-token",
+                                                        "refreshToken": "eyJhbGciOiJIUzI1NiJ9.refresh-token"
+                                                      },
+                                                      "error": null
+                                                    }
+                                                    """
+                                    )
+                            )
+                    )
+            }
+    )
+    public ApiResponse<AuthResponse> guestLogin() {
+        return ApiResponse.success(authService.guestLogin());
+    }
+
     @PostMapping("/logout")
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
@@ -163,6 +195,13 @@ public class AuthController {
     private record LogoutApiResponse(
             @Schema(example = "true") boolean success,
             @Schema(nullable = true) Void data,
+            @Schema(nullable = true) Object error
+    ) {
+    }
+
+    private record AuthApiResponse(
+            @Schema(example = "true") boolean success,
+            AuthResponse data,
             @Schema(nullable = true) Object error
     ) {
     }

@@ -122,7 +122,7 @@ public class PreferenceController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "취향 입력",
-            description = "Accepts selected seed event IDs and starts personalized recommendation creation asynchronously for the authenticated user.",
+            description = "Stores selected seed event IDs for the authenticated user and starts personalized recommendation creation asynchronously.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(

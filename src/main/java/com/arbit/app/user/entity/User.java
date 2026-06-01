@@ -29,20 +29,20 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false, length = 100)
+    @Column(length = 100)
     private String nickname;
 
     @Column(length = 1000)
     private String profileImageUrl;
 
-    @Column(nullable = false)
+    @Column
     private Integer age;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private UserGender gender;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 255)
     private String residentialArea;
 
     @Column()
