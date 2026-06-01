@@ -2,12 +2,18 @@ package com.arbit.app.recommendation.dto;
 
 import com.arbit.app.event.entity.Event;
 import com.arbit.app.event.entity.EventStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @Schema(description = "Recommended event summary response")
 public record RecommendedEventResponse(
+        @JsonProperty("event_id")
+        @Schema(description = "Event UUID", example = "550e8400-e29b-41d4-a716-446655440000")
+        UUID eventId,
+
         @Schema(description = "Event title", example = "Echoes of Silence")
         String title,
 
@@ -16,6 +22,9 @@ public record RecommendedEventResponse(
 
         @Schema(description = "Poster image URL", example = "https://cdn.arbit.app/events/light-museum/poster.jpg")
         String posterImageUrl,
+
+        @Schema(description = "Event booking or detail URL", example = "https://tickets.example.com/events/550e8400", nullable = true)
+        String url,
 
         @Schema(description = "Venue", example = "Metropolitan Museum")
         String venue,
@@ -47,9 +56,11 @@ public record RecommendedEventResponse(
 
     public static RecommendedEventResponse from(Event event, BigDecimal matchScore, boolean bookmarked) {
         return new RecommendedEventResponse(
+                event.getId(),
                 event.getTitle(),
                 event.getCategory().getName(),
                 event.getPosterImageUrl(),
+                event.getBookingUrl(),
                 event.getVenue(),
                 event.getDistrict(),
                 event.getStartDate(),

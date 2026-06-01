@@ -293,7 +293,7 @@
   <header>
     <div class="wrap">
       <h1>Arbit 테이블 명세서</h1>
-      <p>현재 Spring Boot JPA 엔티티 기준으로 작성한 데이터베이스 테이블 정의 문서입니다. 타입과 제약조건은 엔티티 어노테이션을 MySQL 관점으로 해석했으며, 비즈니스 설명은 코드와 도메인 규칙을 함께 기준으로 정리했습니다.</p>
+      <p>현재 Spring Boot JPA 엔티티를 기준으로 작성한 데이터베이스 테이블 정의 문서입니다. 타입과 제약조건은 엔티티 어노테이션을 MySQL 관점으로 해석했습니다.</p>
     </div>
   </header>
 
@@ -306,36 +306,41 @@
       <div class="meta-grid">
         <div class="meta"><strong>Project</strong><span>arbit</span></div>
         <div class="meta"><strong>Stack</strong><span>Java 17, Spring Boot 3.3.4, JPA, MySQL</span></div>
-        <div class="meta"><strong>Entity Tables</strong><span>14개</span></div>
-        <div class="meta"><strong>Generated</strong><span>2026-05-30</span></div>
+        <div class="meta"><strong>Entity Tables</strong><span>19개</span></div>
+        <div class="meta"><strong>Updated</strong><span>2026-06-01</span></div>
       </div>
       <div class="content">
         <h3>공통 규칙</h3>
         <p class="summary"><code>BaseTimeEntity</code>를 상속한 모든 엔티티는 <code>created_at</code>, <code>updated_at</code> 감사 컬럼을 가집니다. <code>created_at</code>은 생성 시 필수이며 수정 불가, <code>updated_at</code>은 마지막 수정 시각을 저장합니다.</p>
-        <div class="note">주의: 실제 DDL은 Hibernate <code>ddl-auto=update</code>, MySQL 버전, naming strategy에 따라 세부 타입과 인덱스명이 달라질 수 있습니다. 이 문서는 현재 엔티티 계약을 사람이 검토하기 쉽게 정리한 명세입니다.</div>
+        <div class="note">주의: 실제 DDL은 Hibernate <code>ddl-auto=update</code>, MySQL 버전, naming strategy에 따라 일부 물리 타입과 인덱스명이 달라질 수 있습니다. 이 문서는 현재 엔티티 계약을 기준으로 한 테이블 명세입니다.</div>
       </div>
       <nav class="toc" aria-label="테이블 목차">
         <a href="#users">users<span>사용자 계정과 프로필</span></a>
         <a href="#categories">categories<span>이벤트 카테고리 마스터</span></a>
         <a href="#events">events<span>전시, 공연, 행사 정보</span></a>
+        <a href="#keywords">keywords<span>통합 키워드 마스터</span></a>
         <a href="#preference_keywords">preference_keywords<span>취향 키워드 마스터</span></a>
         <a href="#classification_keywords">classification_keywords<span>분류 키워드 마스터</span></a>
         <a href="#age_restriction_keywords">age_restriction_keywords<span>연령 제한 키워드</span></a>
         <a href="#user_categories">user_categories<span>사용자 선호 카테고리</span></a>
         <a href="#user_preference_keywords">user_preference_keywords<span>사용자 선호 키워드</span></a>
-        <a href="#event_keywords">event_keywords<span>이벤트 키워드 매핑</span></a>
+        <a href="#user_keyword_weights">user_keyword_weights<span>사용자 키워드 가중치</span></a>
+        <a href="#event_keywords">event_keywords<span>이벤트 취향 키워드 매핑</span></a>
+        <a href="#event_keyword_weights">event_keyword_weights<span>이벤트 키워드 가중치</span></a>
         <a href="#event_classifications">event_classifications<span>이벤트 분류 매핑</span></a>
         <a href="#event_age_restrictions">event_age_restrictions<span>이벤트 연령 제한</span></a>
         <a href="#bookmarks">bookmarks<span>사용자 북마크</span></a>
         <a href="#reviews">reviews<span>사용자 리뷰</span></a>
         <a href="#recommendations">recommendations<span>개인화 추천 결과</span></a>
+        <a href="#recommendation_runs">recommendation_runs<span>추천 실행 이력</span></a>
+        <a href="#recommendation_items">recommendation_items<span>추천 실행별 항목</span></a>
       </nav>
     </section>
 
     <section id="users">
       <div class="section-head">
         <h2>users</h2>
-        <p class="summary">서비스 회원의 로그인 계정, 공개 프로필, 거주 지역 및 위치 기반 추천에 필요한 좌표 정보를 저장합니다.</p>
+        <p class="summary">회원 로그인 계정, 공개 프로필, 거주 지역 및 위치 기반 추천에 필요한 좌표 정보를 저장합니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>User</code></span></div>
@@ -348,18 +353,18 @@
           <table>
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
-              <tr><td><code>id</code></td><td>id</td><td>BINARY(16)</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span></td><td>사용자 식별자입니다. 애플리케이션에서 UUID를 생성해 저장합니다.</td></tr>
-              <tr><td><code>username</code></td><td>username</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>로그인에 사용하는 계정명입니다. 중복 가입을 막기 위해 유일해야 합니다.</td></tr>
-              <tr><td><code>password</code></td><td>password</td><td>VARCHAR(255)</td><td><span class="badge nn">NOT NULL</span></td><td>BCrypt 등으로 암호화된 비밀번호 해시를 저장합니다. 원문 비밀번호를 저장하지 않습니다.</td></tr>
-              <tr><td><code>nickname</code></td><td>nickname</td><td>VARCHAR(100)</td><td><span class="badge nn">NOT NULL</span></td><td>서비스 화면에 노출되는 사용자 표시 이름입니다.</td></tr>
-              <tr><td><code>profile_image_url</code></td><td>profileImageUrl</td><td>VARCHAR(1000)</td><td>NULL</td><td>프로필 이미지 접근 URL입니다. 이미지가 없으면 비어 있을 수 있습니다.</td></tr>
-              <tr><td><code>age</code></td><td>age</td><td>INT</td><td><span class="badge nn">NOT NULL</span></td><td>사용자 나이입니다. 연령 제한 이벤트 필터링과 개인화 추천에 활용할 수 있습니다.</td></tr>
-              <tr><td><code>gender</code></td><td>gender</td><td>VARCHAR(20)</td><td>NULL</td><td>사용자 성별 선택값입니다. 선택하지 않은 경우 <code>NONSELECT</code>를 사용할 수 있습니다.</td></tr>
-              <tr><td><code>residential_area</code></td><td>residentialArea</td><td>VARCHAR(255)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자의 거주 지역명입니다. 지역 기반 추천과 거리 계산의 기준 설명값입니다.</td></tr>
-              <tr><td><code>residential_latitude</code></td><td>residentialLatitude</td><td>DOUBLE</td><td>NULL</td><td>거주지 위도입니다. 좌표 변환 실패 또는 미입력 시 비어 있을 수 있습니다.</td></tr>
-              <tr><td><code>residential_longitude</code></td><td>residentialLongitude</td><td>DOUBLE</td><td>NULL</td><td>거주지 경도입니다. 거리순 정렬과 위치 기반 추천 계산에 사용할 수 있습니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자 레코드가 생성된 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>사용자 정보가 마지막으로 수정된 시각입니다.</td></tr>
+              <tr><td><code>id</code></td><td>id</td><td>BINARY(16)</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span></td><td>사용자 식별자입니다. 애플리케이션에서 UUID를 생성합니다.</td></tr>
+              <tr><td><code>username</code></td><td>username</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>로그인 계정명입니다.</td></tr>
+              <tr><td><code>password</code></td><td>password</td><td>VARCHAR(255)</td><td><span class="badge nn">NOT NULL</span></td><td>암호화된 비밀번호 해시입니다.</td></tr>
+              <tr><td><code>nickname</code></td><td>nickname</td><td>VARCHAR(100)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자 표시 이름입니다.</td></tr>
+              <tr><td><code>profile_image_url</code></td><td>profileImageUrl</td><td>VARCHAR(1000)</td><td>NULL</td><td>프로필 이미지 URL입니다.</td></tr>
+              <tr><td><code>age</code></td><td>age</td><td>INT</td><td><span class="badge nn">NOT NULL</span></td><td>사용자 나이입니다.</td></tr>
+              <tr><td><code>gender</code></td><td>gender</td><td>VARCHAR(20)</td><td>NULL</td><td>사용자 성별 선택값입니다.</td></tr>
+              <tr><td><code>residential_area</code></td><td>residentialArea</td><td>VARCHAR(255)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자의 거주 지역명입니다.</td></tr>
+              <tr><td><code>residential_latitude</code></td><td>residentialLatitude</td><td>DOUBLE</td><td>NULL</td><td>거주지 위도입니다.</td></tr>
+              <tr><td><code>residential_longitude</code></td><td>residentialLongitude</td><td>DOUBLE</td><td>NULL</td><td>거주지 경도입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -383,9 +388,9 @@
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
               <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>카테고리 식별자입니다.</td></tr>
-              <tr><td><code>name</code></td><td>name</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>카테고리명입니다. 예: 전시, 공연, 축제 등 서비스 분류 체계의 기준값입니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>카테고리 생성 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>카테고리 정보 수정 시각입니다.</td></tr>
+              <tr><td><code>name</code></td><td>name</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>카테고리명입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -395,7 +400,7 @@
     <section id="events">
       <div class="section-head">
         <h2>events</h2>
-        <p class="summary">추천과 검색의 핵심 대상인 전시, 공연, 행사 정보를 저장합니다. 카테고리, 장소, 기간, 유무료 여부, 진행 상태, 평균 평점을 포함합니다.</p>
+        <p class="summary">추천과 검색의 대상인 전시, 공연, 행사 정보를 저장합니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>Event</code></span></div>
@@ -409,19 +414,51 @@
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
               <tr><td><code>id</code></td><td>id</td><td>BINARY(16)</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span></td><td>이벤트 식별자입니다. 애플리케이션에서 UUID를 생성합니다.</td></tr>
-              <tr><td><code>category_id</code></td><td>category</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge nn">NOT NULL</span></td><td>이벤트가 속한 카테고리입니다. <code>categories.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>title</code></td><td>title</td><td>VARCHAR(200)</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 제목입니다. 목록, 상세, 추천 결과에서 주 표시명으로 사용됩니다.</td></tr>
-              <tr><td><code>description</code></td><td>description</td><td>VARCHAR(1000)</td><td>NULL</td><td>이벤트 설명입니다. 행사 소개, 전시 개요, 추천 근거 보조 정보로 활용할 수 있습니다.</td></tr>
+              <tr><td><code>category_id</code></td><td>category</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge nn">NOT NULL</span></td><td>이벤트가 속한 카테고리입니다.</td></tr>
+              <tr><td><code>title</code></td><td>title</td><td>VARCHAR(200)</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 제목입니다.</td></tr>
+              <tr><td><code>description</code></td><td>description</td><td>TEXT</td><td>NULL</td><td>이벤트 설명입니다.</td></tr>
               <tr><td><code>poster_image_url</code></td><td>posterImageUrl</td><td>VARCHAR(1000)</td><td>NULL</td><td>포스터 또는 대표 이미지 URL입니다.</td></tr>
               <tr><td><code>venue</code></td><td>venue</td><td>VARCHAR(100)</td><td><span class="badge nn">NOT NULL</span></td><td>행사가 열리는 장소명입니다.</td></tr>
-              <tr><td><code>district</code></td><td>district</td><td>VARCHAR(50)</td><td><span class="badge nn">NOT NULL</span></td><td>지역구 또는 행정구역명입니다. 지역 필터와 거리 기반 검색에 활용됩니다.</td></tr>
+              <tr><td><code>venue_address</code></td><td>venueAddress</td><td>VARCHAR(255)</td><td>NULL</td><td>장소 주소입니다.</td></tr>
+              <tr><td><code>district</code></td><td>district</td><td>VARCHAR(50)</td><td><span class="badge nn">NOT NULL</span></td><td>지역구 또는 행정구역명입니다.</td></tr>
+              <tr><td><code>latitude</code></td><td>latitude</td><td>DOUBLE</td><td>NULL</td><td>이벤트 장소 위도입니다.</td></tr>
+              <tr><td><code>longitude</code></td><td>longitude</td><td>DOUBLE</td><td>NULL</td><td>이벤트 장소 경도입니다.</td></tr>
               <tr><td><code>start_date</code></td><td>startDate</td><td>DATE</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 시작일입니다.</td></tr>
-              <tr><td><code>end_date</code></td><td>endDate</td><td>DATE</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 종료일입니다. 마감 임박 정렬과 상태 계산의 기준입니다.</td></tr>
-              <tr><td><code>free</code></td><td>free</td><td>BIT / BOOLEAN</td><td><span class="badge nn">NOT NULL</span></td><td>무료 이벤트 여부입니다. 무료/유료 필터링에 사용됩니다.</td></tr>
-              <tr><td><code>status</code></td><td>status</td><td>VARCHAR(20)</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 진행 상태입니다. 예정, 진행 중, 종료 값을 문자열 enum으로 저장합니다.</td></tr>
-              <tr><td><code>average_rating</code></td><td>averageRating</td><td>DECIMAL(3,2)</td><td><span class="badge nn">NOT NULL</span></td><td>리뷰를 기반으로 계산된 평균 평점입니다. 생성 시 <code>0.00</code>으로 초기화됩니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 등록 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>이벤트 정보 또는 평균 평점 수정 시각입니다.</td></tr>
+              <tr><td><code>end_date</code></td><td>endDate</td><td>DATE</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 종료일입니다.</td></tr>
+              <tr><td><code>free</code></td><td>free</td><td>BIT / BOOLEAN</td><td><span class="badge nn">NOT NULL</span></td><td>무료 이벤트 여부입니다.</td></tr>
+              <tr><td><code>status</code></td><td>status</td><td>VARCHAR(20)</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 진행 상태입니다.</td></tr>
+              <tr><td><code>average_rating</code></td><td>averageRating</td><td>DECIMAL(3,2)</td><td><span class="badge nn">NOT NULL</span></td><td>리뷰 기반 평균 평점입니다. 생성 시 0으로 초기화됩니다.</td></tr>
+              <tr><td><code>price</code></td><td>price</td><td>VARCHAR(255)</td><td>NULL</td><td>가격 설명입니다.</td></tr>
+              <tr><td><code>booking_url</code></td><td>bookingUrl</td><td>VARCHAR(1000)</td><td>NULL</td><td>예매 또는 상세 페이지 URL입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="keywords">
+      <div class="section-head">
+        <h2>keywords</h2>
+        <p class="summary">추천 계산에 사용하는 통합 키워드 마스터 테이블입니다.</p>
+      </div>
+      <div class="meta-grid">
+        <div class="meta"><strong>Entity</strong><span><code>Keyword</code></span></div>
+        <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
+        <div class="meta"><strong>Unique</strong><span><code>uk_keyword_type_value</code>: type + value</span></div>
+        <div class="meta"><strong>Enums</strong><span><code>type</code>: CATEGORY, MOOD, TOPIC, AUDIENCE, AGE, FEATURE</span></div>
+      </div>
+      <div class="content">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>키워드 식별자입니다.</td></tr>
+              <tr><td><code>type</code></td><td>type</td><td>VARCHAR(30)</td><td><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>키워드 유형입니다.</td></tr>
+              <tr><td><code>value</code></td><td>value</td><td>VARCHAR(80)</td><td><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>키워드 값입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -431,7 +468,7 @@
     <section id="preference_keywords">
       <div class="section-head">
         <h2>preference_keywords</h2>
-        <p class="summary">사용자 취향과 이벤트 특징을 연결하는 키워드 마스터입니다. 개인화 추천의 주요 매칭 기준으로 사용됩니다.</p>
+        <p class="summary">사용자 취향과 이벤트 특성을 연결하는 취향 키워드 마스터 테이블입니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>PreferenceKeyword</code></span></div>
@@ -445,9 +482,9 @@
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
               <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>취향 키워드 식별자입니다.</td></tr>
-              <tr><td><code>value</code></td><td>value</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>키워드 값입니다. 예: 미디어아트, 가족, 체험형 등 사용자 선호와 이벤트 태그를 같은 기준으로 연결합니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>키워드 생성 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>키워드 수정 시각입니다.</td></tr>
+              <tr><td><code>value</code></td><td>value</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>키워드 값입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -457,7 +494,7 @@
     <section id="classification_keywords">
       <div class="section-head">
         <h2>classification_keywords</h2>
-        <p class="summary">이벤트의 성격, 분위기, 분류 결과 등을 표현하는 분류 키워드 마스터입니다.</p>
+        <p class="summary">이벤트 분류에 사용하는 키워드 마스터 테이블입니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>ClassificationKeyword</code></span></div>
@@ -471,9 +508,9 @@
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
               <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>분류 키워드 식별자입니다.</td></tr>
-              <tr><td><code>value</code></td><td>value</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>분류 키워드 값입니다. 추천 사유, 분류 검색, 향후 NLP 기반 자동 분류에 활용할 수 있습니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>분류 키워드 생성 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>분류 키워드 수정 시각입니다.</td></tr>
+              <tr><td><code>value</code></td><td>value</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>분류 키워드 값입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -483,7 +520,7 @@
     <section id="age_restriction_keywords">
       <div class="section-head">
         <h2>age_restriction_keywords</h2>
-        <p class="summary">이벤트 관람 가능 연령 또는 제한 조건을 표현하는 키워드 마스터입니다.</p>
+        <p class="summary">이벤트 연령 제한 정보를 표현하는 키워드 마스터 테이블입니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>AgeRestrictionKeyword</code></span></div>
@@ -497,9 +534,9 @@
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
               <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>연령 제한 키워드 식별자입니다.</td></tr>
-              <tr><td><code>value</code></td><td>value</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>연령 제한 값입니다. 예: 전체 관람가, 만 12세 이상, 성인 전용 등 이벤트 접근 가능 여부 판단에 사용됩니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>연령 제한 키워드 생성 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>연령 제한 키워드 수정 시각입니다.</td></tr>
+              <tr><td><code>value</code></td><td>value</td><td>VARCHAR(50)</td><td><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>연령 제한 값입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -509,7 +546,7 @@
     <section id="user_categories">
       <div class="section-head">
         <h2>user_categories</h2>
-        <p class="summary">사용자가 선호하는 카테고리를 저장하는 다대다 연결 테이블입니다.</p>
+        <p class="summary">사용자와 선호 카테고리를 연결합니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>UserCategory</code></span></div>
@@ -522,11 +559,11 @@
           <table>
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
-              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>사용자 선호 카테고리 매핑 식별자입니다.</td></tr>
-              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>선호 카테고리를 선택한 사용자입니다. <code>users.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>category_id</code></td><td>category</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>사용자가 선호하는 카테고리입니다. <code>categories.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>선호 카테고리 등록 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>매핑 수정 시각입니다.</td></tr>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>매핑 식별자입니다.</td></tr>
+              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>users.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>category_id</code></td><td>category</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>categories.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -536,24 +573,53 @@
     <section id="user_preference_keywords">
       <div class="section-head">
         <h2>user_preference_keywords</h2>
-        <p class="summary">사용자와 취향 키워드의 연결 정보를 저장합니다. 추천 점수 계산에서 사용자 선호 프로필로 사용됩니다.</p>
+        <p class="summary">사용자와 취향 키워드를 연결합니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>UserPreferenceKeyword</code></span></div>
         <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
         <div class="meta"><strong>Foreign Keys</strong><span><code>user_id</code>, <code>preference_keyword_id</code></span></div>
-        <div class="meta"><strong>Unique</strong><span><code>uk_user_preference_keyword</code>: user + keyword</span></div>
+        <div class="meta"><strong>Unique</strong><span><code>uk_user_preference_keyword</code>: user + preference keyword</span></div>
       </div>
       <div class="content">
         <div class="table-scroll">
           <table>
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
-              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>사용자 선호 키워드 매핑 식별자입니다.</td></tr>
-              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>키워드를 선호하는 사용자입니다. <code>users.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>preference_keyword_id</code></td><td>preferenceKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>사용자가 선택했거나 리뷰 분석으로 추론된 취향 키워드입니다. <code>preference_keywords.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>선호 키워드 등록 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>매핑 수정 시각입니다.</td></tr>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>매핑 식별자입니다.</td></tr>
+              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>users.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>preference_keyword_id</code></td><td>preferenceKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>preference_keywords.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="user_keyword_weights">
+      <div class="section-head">
+        <h2>user_keyword_weights</h2>
+        <p class="summary">사용자별 통합 키워드 가중치를 저장합니다.</p>
+      </div>
+      <div class="meta-grid">
+        <div class="meta"><strong>Entity</strong><span><code>UserKeywordWeight</code></span></div>
+        <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
+        <div class="meta"><strong>Foreign Keys</strong><span><code>user_id</code>, <code>keyword_id</code></span></div>
+        <div class="meta"><strong>Unique</strong><span><code>uk_user_keyword_weight</code>: user + keyword</span></div>
+      </div>
+      <div class="content">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>가중치 식별자입니다.</td></tr>
+              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>users.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>keyword_id</code></td><td>keyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>keywords.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>weight</code></td><td>weight</td><td>DECIMAL(5,4)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자 키워드 가중치입니다.</td></tr>
+              <tr><td><code>source</code></td><td>source</td><td>VARCHAR(30)</td><td><span class="badge nn">NOT NULL</span></td><td>가중치 생성 출처입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -563,24 +629,53 @@
     <section id="event_keywords">
       <div class="section-head">
         <h2>event_keywords</h2>
-        <p class="summary">이벤트와 취향 키워드를 연결합니다. 사용자 취향 키워드와 매칭되어 추천 점수와 추천 사유를 만드는 기반 데이터입니다.</p>
+        <p class="summary">이벤트와 취향 키워드를 연결합니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>EventKeyword</code></span></div>
         <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
         <div class="meta"><strong>Foreign Keys</strong><span><code>event_id</code>, <code>preference_keyword_id</code></span></div>
-        <div class="meta"><strong>Unique</strong><span><code>uk_event_keyword</code>: event + keyword</span></div>
+        <div class="meta"><strong>Unique</strong><span><code>uk_event_keyword</code>: event + preference keyword</span></div>
       </div>
       <div class="content">
         <div class="table-scroll">
           <table>
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
-              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>이벤트 키워드 매핑 식별자입니다.</td></tr>
-              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>키워드가 붙은 이벤트입니다. <code>events.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>preference_keyword_id</code></td><td>preferenceKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>이벤트 특성을 표현하는 취향 키워드입니다. <code>preference_keywords.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 키워드 등록 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>매핑 수정 시각입니다.</td></tr>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>매핑 식별자입니다.</td></tr>
+              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>events.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>preference_keyword_id</code></td><td>preferenceKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>preference_keywords.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="event_keyword_weights">
+      <div class="section-head">
+        <h2>event_keyword_weights</h2>
+        <p class="summary">이벤트별 통합 키워드 가중치를 저장합니다.</p>
+      </div>
+      <div class="meta-grid">
+        <div class="meta"><strong>Entity</strong><span><code>EventKeywordWeight</code></span></div>
+        <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
+        <div class="meta"><strong>Foreign Keys</strong><span><code>event_id</code>, <code>keyword_id</code></span></div>
+        <div class="meta"><strong>Unique</strong><span><code>uk_event_keyword_weight</code>: event + keyword</span></div>
+      </div>
+      <div class="content">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>가중치 식별자입니다.</td></tr>
+              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>events.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>keyword_id</code></td><td>keyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>keywords.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>weight</code></td><td>weight</td><td>DECIMAL(5,4)</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 키워드 가중치입니다.</td></tr>
+              <tr><td><code>source</code></td><td>source</td><td>VARCHAR(30)</td><td><span class="badge nn">NOT NULL</span></td><td>가중치 생성 출처입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -590,24 +685,24 @@
     <section id="event_classifications">
       <div class="section-head">
         <h2>event_classifications</h2>
-        <p class="summary">이벤트와 분류 키워드를 연결합니다. 이벤트의 주제, 분위기, 추천 분류 결과를 다중 값으로 표현합니다.</p>
+        <p class="summary">이벤트와 분류 키워드를 연결합니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>EventClassification</code></span></div>
         <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
         <div class="meta"><strong>Foreign Keys</strong><span><code>event_id</code>, <code>classification_keyword_id</code></span></div>
-        <div class="meta"><strong>Unique</strong><span><code>uk_event_classification</code>: event + classification</span></div>
+        <div class="meta"><strong>Unique</strong><span><code>uk_event_classification</code>: event + classification keyword</span></div>
       </div>
       <div class="content">
         <div class="table-scroll">
           <table>
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
-              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>이벤트 분류 매핑 식별자입니다.</td></tr>
-              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>분류 대상 이벤트입니다. <code>events.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>classification_keyword_id</code></td><td>classificationKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>이벤트에 부여된 분류 키워드입니다. <code>classification_keywords.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>이벤트 분류 등록 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>매핑 수정 시각입니다.</td></tr>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>매핑 식별자입니다.</td></tr>
+              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>events.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>classification_keyword_id</code></td><td>classificationKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>classification_keywords.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -617,7 +712,7 @@
     <section id="event_age_restrictions">
       <div class="section-head">
         <h2>event_age_restrictions</h2>
-        <p class="summary">이벤트별 연령 제한 정보를 저장합니다. 현재 엔티티 기준으로 이벤트 하나는 하나의 연령 제한만 가질 수 있습니다.</p>
+        <p class="summary">이벤트별 연령 제한 정보를 저장합니다. 현재 제약상 이벤트당 하나의 연령 제한만 저장됩니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>EventAgeRestriction</code></span></div>
@@ -630,11 +725,11 @@
           <table>
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
-              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>이벤트 연령 제한 매핑 식별자입니다.</td></tr>
-              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td>연령 제한이 적용되는 이벤트입니다. <code>events.id</code>를 참조하며 테이블 내에서 유일합니다.</td></tr>
-              <tr><td><code>age_restriction_keyword_id</code></td><td>ageRestrictionKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge nn">NOT NULL</span></td><td>적용할 연령 제한 키워드입니다. <code>age_restriction_keywords.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>연령 제한 등록 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>매핑 수정 시각입니다.</td></tr>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>매핑 식별자입니다.</td></tr>
+              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UNIQUE</span><span class="badge nn">NOT NULL</span></td><td><code>events.id</code>를 참조하며 테이블 내에서 유일합니다.</td></tr>
+              <tr><td><code>age_restriction_keyword_id</code></td><td>ageRestrictionKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge nn">NOT NULL</span></td><td><code>age_restriction_keywords.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -644,7 +739,7 @@
     <section id="bookmarks">
       <div class="section-head">
         <h2>bookmarks</h2>
-        <p class="summary">사용자가 관심 있는 이벤트를 저장한 북마크 목록입니다. 사용자별 동일 이벤트 중복 북마크를 허용하지 않습니다.</p>
+        <p class="summary">사용자가 관심 있는 이벤트를 저장한 북마크 목록입니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>Bookmark</code></span></div>
@@ -658,10 +753,10 @@
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
               <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>북마크 식별자입니다.</td></tr>
-              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>북마크를 등록한 사용자입니다. <code>users.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>북마크된 이벤트입니다. <code>events.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>북마크 생성 시각입니다. 사용자 관심 이벤트 알림 기준으로 활용할 수 있습니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>북마크 레코드 수정 시각입니다.</td></tr>
+              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>users.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>events.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -671,7 +766,7 @@
     <section id="reviews">
       <div class="section-head">
         <h2>reviews</h2>
-        <p class="summary">사용자가 이벤트에 작성한 평점과 리뷰 내용을 저장합니다. 사용자 한 명은 같은 이벤트에 리뷰를 하나만 작성할 수 있습니다.</p>
+        <p class="summary">사용자가 이벤트에 작성한 평점과 리뷰 내용을 저장합니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>Review</code></span></div>
@@ -685,13 +780,13 @@
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
               <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>리뷰 식별자입니다.</td></tr>
-              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>리뷰를 작성한 사용자입니다. <code>users.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>리뷰 대상 이벤트입니다. <code>events.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>users.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>events.id</code>를 참조합니다.</td></tr>
               <tr><td><code>rating</code></td><td>rating</td><td>INT</td><td><span class="badge nn">NOT NULL</span></td><td>사용자 평점입니다. 도메인 규칙상 1부터 5까지의 값을 기대합니다.</td></tr>
-              <tr><td><code>content</code></td><td>content</td><td>VARCHAR(200)</td><td><span class="badge nn">NOT NULL</span></td><td>리뷰 본문입니다. 최대 200자이며 향후 키워드 추출의 입력으로 사용할 수 있습니다.</td></tr>
-              <tr><td><code>verification_image_url</code></td><td>verificationImageUrl</td><td>VARCHAR(500)</td><td>NULL</td><td>관람 인증 이미지 URL입니다. OCR 기반 리뷰 검증 기능 확장 시 활용됩니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>리뷰 작성 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>리뷰 수정 시각입니다.</td></tr>
+              <tr><td><code>content</code></td><td>content</td><td>VARCHAR(200)</td><td><span class="badge nn">NOT NULL</span></td><td>리뷰 본문입니다.</td></tr>
+              <tr><td><code>verification_image_url</code></td><td>verificationImageUrl</td><td>VARCHAR(500)</td><td>NULL</td><td>관람 인증 이미지 URL입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -701,7 +796,7 @@
     <section id="recommendations">
       <div class="section-head">
         <h2>recommendations</h2>
-        <p class="summary">사용자별 이벤트 추천 결과를 저장합니다. 추천 점수와 추천 사유를 함께 보관해 추천 목록 응답에 사용합니다.</p>
+        <p class="summary">사용자별 이벤트 추천 결과를 저장합니다.</p>
       </div>
       <div class="meta-grid">
         <div class="meta"><strong>Entity</strong><span><code>Recommendation</code></span></div>
@@ -715,12 +810,72 @@
             <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
             <tbody>
               <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>추천 결과 식별자입니다.</td></tr>
-              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>추천을 받을 사용자입니다. <code>users.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td>추천 대상 이벤트입니다. <code>events.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>match_score</code></td><td>matchScore</td><td>DECIMAL(5,2)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자와 이벤트의 매칭 점수입니다. 카테고리, 키워드, 위치, 리뷰 등 추천 로직의 결과값을 저장합니다.</td></tr>
-              <tr><td><code>reason</code></td><td>reason</td><td>VARCHAR(200)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자에게 보여줄 추천 사유 문구입니다. 예: "미디어아트 키워드와 일치".</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>추천 결과 생성 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>추천 점수 또는 사유가 재계산된 시각입니다.</td></tr>
+              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>users.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>events.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>match_score</code></td><td>matchScore</td><td>DECIMAL(5,2)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자와 이벤트의 매칭 점수입니다.</td></tr>
+              <tr><td><code>reason</code></td><td>reason</td><td>VARCHAR(500)</td><td><span class="badge nn">NOT NULL</span></td><td>사용자에게 보여줄 추천 사유 문구입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="recommendation_runs">
+      <div class="section-head">
+        <h2>recommendation_runs</h2>
+        <p class="summary">추천 알고리즘 실행 이력과 입력 이벤트 목록을 저장합니다.</p>
+      </div>
+      <div class="meta-grid">
+        <div class="meta"><strong>Entity</strong><span><code>RecommendationRun</code></span></div>
+        <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
+        <div class="meta"><strong>Foreign Key</strong><span><code>user_id</code> → <code>users.id</code></span></div>
+        <div class="meta"><strong>Referenced By</strong><span><code>recommendation_items</code></span></div>
+      </div>
+      <div class="content">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>추천 실행 식별자입니다.</td></tr>
+              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge nn">NOT NULL</span></td><td><code>users.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>algorithm</code></td><td>algorithm</td><td>VARCHAR(50)</td><td><span class="badge nn">NOT NULL</span></td><td>추천 알고리즘명입니다.</td></tr>
+              <tr><td><code>model_version</code></td><td>modelVersion</td><td>VARCHAR(50)</td><td><span class="badge nn">NOT NULL</span></td><td>모델 또는 알고리즘 버전입니다.</td></tr>
+              <tr><td><code>input_event_ids_json</code></td><td>inputEventIdsJson</td><td>TEXT</td><td>NULL</td><td>추천 입력 이벤트 ID 목록 JSON입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="recommendation_items">
+      <div class="section-head">
+        <h2>recommendation_items</h2>
+        <p class="summary">추천 실행별 이벤트 추천 항목과 점수, 사유, 상세 피처 점수를 저장합니다.</p>
+      </div>
+      <div class="meta-grid">
+        <div class="meta"><strong>Entity</strong><span><code>RecommendationItem</code></span></div>
+        <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
+        <div class="meta"><strong>Foreign Keys</strong><span><code>run_id</code>, <code>event_id</code></span></div>
+        <div class="meta"><strong>Unique</strong><span><code>uk_recommendation_item_run_event</code>: run + event</span></div>
+      </div>
+      <div class="content">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>추천 항목 식별자입니다.</td></tr>
+              <tr><td><code>run_id</code></td><td>run</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>recommendation_runs.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>event_id</code></td><td>event</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>events.id</code>를 참조합니다.</td></tr>
+              <tr><td><code>rank_no</code></td><td>rankNo</td><td>INT</td><td><span class="badge nn">NOT NULL</span></td><td>추천 순위입니다.</td></tr>
+              <tr><td><code>score</code></td><td>score</td><td>DECIMAL(8,4)</td><td><span class="badge nn">NOT NULL</span></td><td>추천 점수입니다.</td></tr>
+              <tr><td><code>reason</code></td><td>reason</td><td>VARCHAR(300)</td><td><span class="badge nn">NOT NULL</span></td><td>추천 사유입니다.</td></tr>
+              <tr><td><code>feature_scores_json</code></td><td>featureScoresJson</td><td>TEXT</td><td>NULL</td><td>피처별 점수 JSON입니다.</td></tr>
+              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
+              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
             </tbody>
           </table>
         </div>
@@ -736,13 +891,18 @@
         <div class="relations">
           <div class="relation"><code>events.category_id</code> → <code>categories.id</code>: 이벤트는 하나의 카테고리에 속합니다.</div>
           <div class="relation"><code>user_categories.user_id</code> + <code>category_id</code>: 사용자별 선호 카테고리는 중복 저장되지 않습니다.</div>
-          <div class="relation"><code>user_preference_keywords.user_id</code> + <code>preference_keyword_id</code>: 사용자별 선호 키워드는 중복 저장되지 않습니다.</div>
+          <div class="relation"><code>keywords.type</code> + <code>value</code>: 같은 유형 안에서 키워드 값은 중복 저장되지 않습니다.</div>
+          <div class="relation"><code>user_preference_keywords.user_id</code> + <code>preference_keyword_id</code>: 사용자별 취향 키워드는 중복 저장되지 않습니다.</div>
+          <div class="relation"><code>user_keyword_weights.user_id</code> + <code>keyword_id</code>: 사용자별 키워드 가중치는 하나만 유지됩니다.</div>
           <div class="relation"><code>event_keywords.event_id</code> + <code>preference_keyword_id</code>: 이벤트별 취향 키워드는 중복 저장되지 않습니다.</div>
+          <div class="relation"><code>event_keyword_weights.event_id</code> + <code>keyword_id</code>: 이벤트별 키워드 가중치는 하나만 유지됩니다.</div>
           <div class="relation"><code>event_classifications.event_id</code> + <code>classification_keyword_id</code>: 이벤트별 분류 키워드는 중복 저장되지 않습니다.</div>
-          <div class="relation"><code>event_age_restrictions.event_id</code>: 이벤트 하나당 하나의 연령 제한 정보만 저장됩니다.</div>
-          <div class="relation"><code>bookmarks.user_id</code> + <code>event_id</code>: 사용자 한 명은 같은 이벤트를 한 번만 북마크할 수 있습니다.</div>
-          <div class="relation"><code>reviews.user_id</code> + <code>event_id</code>: 사용자 한 명은 같은 이벤트에 리뷰를 하나만 작성할 수 있습니다.</div>
+          <div class="relation"><code>event_age_restrictions.event_id</code>: 이벤트당 하나의 연령 제한 정보만 저장됩니다.</div>
+          <div class="relation"><code>bookmarks.user_id</code> + <code>event_id</code>: 사용자는 같은 이벤트를 한 번만 북마크할 수 있습니다.</div>
+          <div class="relation"><code>reviews.user_id</code> + <code>event_id</code>: 사용자는 같은 이벤트에 리뷰를 하나만 작성할 수 있습니다.</div>
           <div class="relation"><code>recommendations.user_id</code> + <code>event_id</code>: 사용자별 동일 이벤트 추천 결과는 하나만 유지됩니다.</div>
+          <div class="relation"><code>recommendation_runs.user_id</code> → <code>users.id</code>: 추천 실행 이력은 사용자에 속합니다.</div>
+          <div class="relation"><code>recommendation_items.run_id</code> + <code>event_id</code>: 추천 실행 안에서 같은 이벤트 항목은 중복 저장되지 않습니다.</div>
         </div>
       </div>
     </section>

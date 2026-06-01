@@ -1,12 +1,18 @@
 package com.arbit.app.user.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Schema(description = "My review item")
 public record MyReviewResponse(
         @Schema(description = "Review ID", example = "12")
         Long reviewId,
+
+        @JsonProperty("event_id")
+        @Schema(description = "Event UUID", example = "550e8400-e29b-41d4-a716-446655440000")
+        UUID eventId,
 
         @Schema(description = "Event title", example = "Light Museum Seoul")
         String title,

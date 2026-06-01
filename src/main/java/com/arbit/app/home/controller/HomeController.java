@@ -50,6 +50,7 @@ public class HomeController {
                                                       "data": {
                                                         "events": [
                                                           {
+                                                            "event_id": "550e8400-e29b-41d4-a716-446655440000",
                                                             "title": "Echoes of Silence",
                                                             "category": "Media Art",
                                                             "posterImageUrl": "https://cdn.arbit.app/events/light-museum/poster.jpg",
@@ -146,6 +147,8 @@ public class HomeController {
 
     @Schema(description = "Home event item")
     private record HomeEventSwaggerItem(
+            @com.fasterxml.jackson.annotation.JsonProperty("event_id")
+            UUID eventId,
             String title,
             String category,
             String posterImageUrl,

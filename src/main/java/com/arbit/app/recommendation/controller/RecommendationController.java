@@ -52,9 +52,11 @@ public class RecommendationController {
                                                       "success": true,
                                                       "data": [
                                                         {
+                                                          "event_id": "550e8400-e29b-41d4-a716-446655440000",
                                                           "title": "Echoes of Silence",
                                                           "category": "exhibition",
                                                           "posterImageUrl": null,
+                                                          "url": "https://tickets.example.com/events/550e8400",
                                                           "venue": null,
                                                           "district": "Jongno-gu",
                                                           "startDate": "2026-05-01",
@@ -146,9 +148,12 @@ public class RecommendationController {
 
     @Schema(description = "Recommendation event item")
     private record RecommendationSwaggerItem(
+            @com.fasterxml.jackson.annotation.JsonProperty("event_id")
+            java.util.UUID eventId,
             String title,
             String category,
             String posterImageUrl,
+            String url,
             String venue,
             String district,
             LocalDate startDate,

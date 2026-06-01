@@ -140,6 +140,7 @@ public class UserMeService {
 
     private MyBookmarkResponse toBookmarkResponse(Bookmark bookmark) {
         return new MyBookmarkResponse(
+                bookmark.getEvent().getId(),
                 bookmark.getEvent().getTitle(),
                 bookmark.getEvent().getPosterImageUrl(),
                 bookmark.getEvent().getCategory().getName(),
@@ -154,6 +155,7 @@ public class UserMeService {
     private MyReviewResponse toReviewResponse(Review review) {
         return new MyReviewResponse(
                 review.getId(),
+                review.getEvent().getId(),
                 review.getEvent().getTitle(),
                 review.getEvent().getPosterImageUrl(),
                 review.getRating(),

@@ -23,9 +23,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Set<String> EXCLUDED_PATHS = Set.of(
             "/api/auth/signup",
             "/api/auth/login",
+            "/api/auth/guest-login",
             "/api/home",
             "/api/preferences/categories",
             "/api/events"
+    );
+    private static final Set<String> EXCLUDED_PATH_PREFIXES = Set.of(
+            "/api/events/search"
     );
 
     private final JwtTokenProvider jwtTokenProvider;
@@ -39,7 +43,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String servletPath = request.getServletPath();
-        return EXCLUDED_PATHS.contains(servletPath) || servletPath.startsWith("/api/events/");
+        return EXCLUDED_PATHS.contains(servletPath)
+                || EXCLUDED_PATH_PREFIXES.stream().anyMatch(servletPath::startsWith);
     }
 
     @Override

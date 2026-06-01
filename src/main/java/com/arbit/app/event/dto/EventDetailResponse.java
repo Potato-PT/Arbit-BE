@@ -2,14 +2,19 @@ package com.arbit.app.event.dto;
 
 import com.arbit.app.event.entity.Event;
 import com.arbit.app.event.entity.EventStatus;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Schema(description = "Event detail response")
 public record EventDetailResponse(
+        @JsonProperty("event_id")
+        @Schema(description = "Event UUID", example = "550e8400-e29b-41d4-a716-446655440000")
+        UUID eventId,
         @Schema(description = "Event title", example = "Echoes of Silence")
         String title,
         @Schema(description = "Top-level genre category", example = "Media Art")
@@ -44,6 +49,7 @@ public record EventDetailResponse(
 
     public static EventDetailResponse from(Event event, List<String> keywords, boolean bookmarked) {
         return new EventDetailResponse(
+                event.getId(),
                 event.getTitle(),
                 event.getCategory().getName(),
                 event.getPosterImageUrl(),
@@ -56,7 +62,7 @@ public record EventDetailResponse(
                 null,
                 event.isFree(),
                 keywords,
-                event.getStatus(),
+                EventStatus.from(event.getStartDate(), event.getEndDate(), EventStatus.today()),
                 event.getAverageRating(),
                 bookmarked
         );
