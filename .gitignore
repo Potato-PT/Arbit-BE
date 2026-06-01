@@ -12,4 +12,12 @@ out/
 
 src/main/resources/application-local.yml
 src/test/*
+!src/test/java/
+!src/test/java/com/
+!src/test/java/com/arbit/
+!src/test/java/com/arbit/app/
+src/test/java/com/arbit/app/*
+!src/test/java/com/arbit/app/event/
+!src/test/java/com/arbit/app/event/controller/
+!src/test/java/com/arbit/app/event/controller/EventControllerSearchTest.java
 node_modules/*

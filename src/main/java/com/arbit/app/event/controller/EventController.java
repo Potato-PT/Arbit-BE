@@ -1,10 +1,11 @@
 package com.arbit.app.event.controller;
 
+import com.arbit.app.auth.security.CustomUserDetails;
 import com.arbit.app.common.response.ApiResponse;
 import com.arbit.app.event.dto.EventDetailResponse;
 import com.arbit.app.event.dto.EventResponse;
 import com.arbit.app.event.entity.EventStatus;
-import com.arbit.app.event.repository.EventRepository;
+import com.arbit.app.event.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -16,6 +17,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,10 +32,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "이벤트", description = "전시, 공연, 행사 검색 및 조회 API")
 public class EventController {
 
-    private final EventRepository eventRepository;
+    private static final Logger log = LoggerFactory.getLogger(EventController.class);
 
-    public EventController(EventRepository eventRepository) {
-        this.eventRepository = eventRepository;
+    private final EventService eventService;
+
+    public EventController(EventService eventService) {
+        this.eventService = eventService;
     }
 
     @GetMapping("/{eventId}")
@@ -112,8 +119,10 @@ public class EventController {
                     )
             }
     )
-    public ApiResponse<EventDetailResponse> getEventDetail(@PathVariable UUID eventId) {
-        return ApiResponse.success(null);
+    public ApiResponse<EventDetailResponse> getEventDetail(
+            @PathVariable UUID eventId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.success(eventService.getEventDetail(eventId, userDetails));
     }
 
     @GetMapping
@@ -129,7 +138,7 @@ public class EventController {
                     - category: single genre only
                     - district: multiple borough values allowed
                     - startDate: include only events whose startDate is on or after this date
-                    - endDate: include only events whose startDate is on or before this date
+                    - endDate: include only events whose endDate is on or before this date
 
                     Sorting:
                     - match: preference match score descending, falls back to deadline for unauthenticated requests
@@ -169,7 +178,7 @@ public class EventController {
                     @Parameter(
                             name = "endDate",
                             in = ParameterIn.QUERY,
-                            description = "Include only events whose startDate is on or before this date.",
+                            description = "Include only events whose endDate is on or before this date.",
                             schema = @Schema(type = "string", format = "date"),
                             example = "2026-06-30"
                     ),
@@ -219,12 +228,15 @@ public class EventController {
             }
     )
     public ApiResponse<List<EventResponse>> getEvents(
-            @Parameter(hidden = true)
-            @RequestParam(defaultValue = "ONGOING") EventStatus status) {
-        List<EventResponse> events = eventRepository.findByStatusOrderByEndDateAsc(status).stream()
-                .map(EventResponse::from)
-                .toList();
-        return ApiResponse.success(events);
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) List<String> district,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(defaultValue = "deadline") String sort,
+            @Parameter(hidden = true) @RequestParam(defaultValue = "ONGOING") EventStatus status) {
+        log.info("Event list request received. category={}, district={}, startDate={}, endDate={}, sort={}, status={}",
+                category, district, startDate, endDate, sort, status);
+        return ApiResponse.success(eventService.getEvents(category, district, startDate, endDate, sort, status));
     }
 
     @GetMapping("/search")
@@ -355,10 +367,7 @@ public class EventController {
     public ApiResponse<List<EventResponse>> searchEvents(
             @Parameter(hidden = true)
             @RequestParam(defaultValue = "ONGOING") EventStatus status) {
-        List<EventResponse> events = eventRepository.findByStatusOrderByEndDateAsc(status).stream()
-                .map(EventResponse::from)
-                .toList();
-        return ApiResponse.success(events);
+        return ApiResponse.success(eventService.getEvents(null, null, null, null, "deadline", status));
     }
 
     @Schema(description = "Wrapped event list response")

@@ -271,6 +271,9 @@ Environment rules:
 - Never commit secrets.
 - Use `.env` for local secrets.
 - Keep `.env` in `.gitignore`.
+- When running Arbit locally, use the local MySQL database.
+- When the user types `restart`, start both the `Arbit` and `Arbit-AI` servers at the same time using the local MySQL database.
+- For `restart`, use a dedicated visible run terminal and execute the run commands there so server logs remain visible.
 - Use `SPRING_PROFILES_ACTIVE=gcp` when selecting the GCP profile.
 
 ## 15. Local Development Commands

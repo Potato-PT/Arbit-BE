@@ -1,5 +1,6 @@
 package com.arbit.app.event.dto;
 
+import com.arbit.app.event.entity.Event;
 import com.arbit.app.event.entity.EventStatus;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -40,4 +41,24 @@ public record EventDetailResponse(
         @Schema(description = "Whether the authenticated user bookmarked this event. Always false for unauthenticated requests.", example = "true")
         boolean bookmarked
 ) {
+
+    public static EventDetailResponse from(Event event, List<String> keywords, boolean bookmarked) {
+        return new EventDetailResponse(
+                event.getTitle(),
+                event.getCategory().getName(),
+                event.getPosterImageUrl(),
+                event.getBookingUrl(),
+                event.getDistrict(),
+                event.getVenue(),
+                event.getStartDate(),
+                event.getEndDate(),
+                event.getPrice(),
+                null,
+                event.isFree(),
+                keywords,
+                event.getStatus(),
+                event.getAverageRating(),
+                bookmarked
+        );
+    }
 }
