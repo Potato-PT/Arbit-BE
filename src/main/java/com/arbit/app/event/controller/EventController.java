@@ -11,6 +11,7 @@ import com.arbit.app.event.dto.EventSearchTarget;
 import com.arbit.app.event.entity.EventStatus;
 import com.arbit.app.event.service.EventSearchService;
 import com.arbit.app.event.service.EventService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -134,14 +135,16 @@ public class EventController {
         return ApiResponse.success(eventService.getEvents(category, district, startDate, endDate, sort, status));
     }
 
+    @Hidden
     @GetMapping("/search/suggestions")
+    
     @Operation(
-            summary = "Event search suggestions",
-            description = """
+                summary = "Event search suggestions",
+                description = """
                     Returns lightweight event suggestions for search input autocomplete and preview cards.
                     Use GET /api/events/{eventId} when the user selects a suggestion and needs full detail.
                     """,
-            parameters = {
+                parameters = {
                     @Parameter(
                             name = "keyword",
                             in = ParameterIn.QUERY,
