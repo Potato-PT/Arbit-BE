@@ -11,6 +11,7 @@ import com.arbit.app.review.entity.Review;
 import com.arbit.app.review.repository.ReviewRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,16 @@ public class ReviewService {
         Review savedReview = reviewRepository.save(review);
         updateAverageRating(event);
         return toResponse(savedReview);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getReviews(UUID eventId) {
+        if (!eventRepository.existsById(eventId)) {
+            throw new BusinessException(ErrorCode.EVENT_NOT_FOUND);
+        }
+        return reviewRepository.findAllByEventIdOrderByCreatedAtDesc(eventId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private void updateAverageRating(Event event) {

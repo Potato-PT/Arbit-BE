@@ -1,6 +1,7 @@
 package com.arbit.app.bookmark.repository;
 
 import com.arbit.app.bookmark.entity.Bookmark;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -11,6 +12,8 @@ import java.util.List;
 public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
 
     boolean existsByUserIdAndEventId(UUID userId, UUID eventId);
+
+    Optional<Bookmark> findByUserIdAndEventId(UUID userId, UUID eventId);
 
     void deleteAllByUserId(UUID userId);
 

@@ -86,6 +86,6 @@ jobs:
             cd /home/lalalove0310/arbit
             ls -la
             test -f .env || { echo '.env not found after rsync'; exit 1; }
-            docker compose up -d --build app
+            docker compose up -d --build
             docker compose logs --tail=200 app
           "
