@@ -8,9 +8,10 @@ import com.arbit.app.auth.security.JwtTokenProvider;
 import com.arbit.app.common.exception.BusinessException;
 import com.arbit.app.common.exception.ErrorCode;
 import com.arbit.app.user.entity.User;
+import com.arbit.app.user.entity.UserGender;
+import com.arbit.app.user.repository.UserRepository;
 import java.time.Year;
 import java.util.UUID;
-import com.arbit.app.user.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
@@ -23,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private static final String GUEST_USERNAME_PREFIX = "guest_";
+    private static final String GUEST_NICKNAME_PREFIX = "Guest";
+    private static final String GUEST_RESIDENTIAL_AREA = "NONSELECT";
+    private static final double DEFAULT_RESIDENTIAL_LATITUDE = 0.0;
+    private static final double DEFAULT_RESIDENTIAL_LONGITUDE = 0.0;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -78,6 +83,12 @@ public class AuthService {
         User user = User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
+                .nickname(generateGuestNickname())
+                .age(0)
+                .gender(UserGender.NONSELECT)
+                .residentialArea(GUEST_RESIDENTIAL_AREA)
+                .residentialLatitude(DEFAULT_RESIDENTIAL_LATITUDE)
+                .residentialLongitude(DEFAULT_RESIDENTIAL_LONGITUDE)
                 .build();
         userRepository.save(user);
         return issueTokens(user.getUsername());
@@ -103,6 +114,10 @@ public class AuthService {
             username = GUEST_USERNAME_PREFIX + UUID.randomUUID().toString().replace("-", "");
         } while (userRepository.existsByUsername(username));
         return username;
+    }
+
+    private String generateGuestNickname() {
+        return GUEST_NICKNAME_PREFIX + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
     }
 
     private int toAge(Integer birthYear) {
