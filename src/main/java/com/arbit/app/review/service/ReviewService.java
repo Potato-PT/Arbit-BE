@@ -56,6 +56,22 @@ public class ReviewService {
                 .toList();
     }
 
+    @Transactional
+    public void deleteReview(UUID eventId, Long reviewId, CustomUserDetails userDetails) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
+        if (!review.getEvent().getId().equals(eventId)) {
+            throw new BusinessException(ErrorCode.NOT_FOUND);
+        }
+        if (!review.getUser().getId().equals(userDetails.id())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        Event event = review.getEvent();
+        reviewRepository.delete(review);
+        updateAverageRating(event);
+    }
+
     private void updateAverageRating(Event event) {
         double averageRating = reviewRepository.averageRatingByEventId(event.getId());
         event.updateAverageRating(BigDecimal.valueOf(averageRating).setScale(2, RoundingMode.HALF_UP));

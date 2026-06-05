@@ -17,11 +17,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -138,6 +141,33 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @org.springframework.web.bind.annotation.RequestBody CreateReviewRequest request) {
         return ApiResponse.success(reviewService.createReview(eventId, request, userDetails));
+    }
+
+    @DeleteMapping("/{reviewId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Delete a review",
+            description = "Deletes the authenticated user's review for the specified event.",
+            security = @SecurityRequirement(name = "bearerAuth"),
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "204",
+                            description = "Review deleted successfully",
+                            content = @Content
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication is required"),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Only the review author can delete this review"),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Event or review not found")
+            }
+    )
+    public ApiResponse<Void> deleteReview(
+            @Parameter(description = "Event UUID containing the review to delete", example = "550e8400-e29b-41d4-a716-446655440000")
+            @PathVariable UUID eventId,
+            @Parameter(description = "Review ID to delete", example = "19")
+            @PathVariable Long reviewId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        reviewService.deleteReview(eventId, reviewId, userDetails);
+        return ApiResponse.ok();
     }
 
     @Schema(description = "Wrapped review list response")

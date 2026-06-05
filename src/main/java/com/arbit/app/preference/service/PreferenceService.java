@@ -56,6 +56,7 @@ public class PreferenceService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public List<PreferenceCategoriesResponse> getPreferenceCategories() {
         int rand = ThreadLocalRandom.current().nextInt(RANDOM_STATE_BOUND);
 
@@ -74,14 +75,16 @@ public class PreferenceService {
             }
 
             Map<UUID, Event> localEvents = findLocalEvents(response.events());
+            long distinctSeedEventCount = response.events().stream()
+                    .map(SeedEvent::eventId)
+                    .distinct()
+                    .count();
+            if (localEvents.size() != distinctSeedEventCount) {
+                throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Seed events did not match local events.");
+            }
 
             return response.events().stream()
-                    .map(event -> new PreferenceCategoriesResponse(
-                            event.eventId(),
-                            event.title(),
-                            event.genre(),
-                            posterImageUrlOf(localEvents, event.eventId())
-                    ))
+                    .map(event -> toPreferenceCategoriesResponse(event, localEvents.get(event.eventId())))
                     .toList();
         } catch (RestClientException | IllegalArgumentException exception) {
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
@@ -123,9 +126,13 @@ public class PreferenceService {
                 ));
     }
 
-    private String posterImageUrlOf(Map<UUID, Event> localEvents, UUID eventId) {
-        Event event = localEvents.get(eventId);
-        return event == null ? null : event.getPosterImageUrl();
+    private PreferenceCategoriesResponse toPreferenceCategoriesResponse(SeedEvent seedEvent, Event localEvent) {
+        return new PreferenceCategoriesResponse(
+                seedEvent.eventId(),
+                seedEvent.title(),
+                seedEvent.genre(),
+                localEvent.getPosterImageUrl()
+        );
     }
 
     private void savePreferenceEvents(User user, List<UUID> eventIds) {
@@ -153,5 +160,4 @@ public class PreferenceService {
             String genre
     ) {
     }
-
 }

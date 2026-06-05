@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.UUID;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -56,7 +57,7 @@ public class BookmarkController {
             }
     )
     public ApiResponse<Void> addBookmark(
-            @Parameter(description = "Event UUID to bookmark", example = "550e8400-e29b-41d4-a716-446655440000")
+            @Parameter(description = "Event UUID to bookmark", example = "ca8de333-e82a-4360-906c-1b5467f51561")
             @PathVariable UUID eventId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         bookmarkService.addBookmark(userDetails.id(), eventId);
@@ -69,27 +70,16 @@ public class BookmarkController {
             description = "Removes the specified event from the authenticated user's bookmarks. This endpoint is shared by home and event detail screens.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                            responseCode = "200",
+                            responseCode = "204",
                             description = "Bookmark removed successfully",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    examples = @ExampleObject(
-                                            value = """
-                                                    {
-                                                      "success": true,
-                                                      "data": null,
-                                                      "error": null
-                                                    }
-                                                    """
-                                    )
-                            )
+                            content = @Content
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication is required"),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Bookmark not found")
             }
     )
     public ApiResponse<Void> removeBookmark(
-            @Parameter(description = "Event UUID to unbookmark", example = "550e8400-e29b-41d4-a716-446655440000")
+            @Parameter(description = "Event UUID to unbookmark", example = "ca8de333-e82a-4360-906c-1b5467f51561")
             @PathVariable UUID eventId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         bookmarkService.removeBookmark(userDetails.id(), eventId);
