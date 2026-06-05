@@ -1,6 +1,7 @@
 package com.arbit.app.bookmark.controller;
 
 import com.arbit.app.auth.security.CustomUserDetails;
+import com.arbit.app.bookmark.service.BookmarkService;
 import com.arbit.app.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -21,6 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Bookmark", description = "Bookmark APIs used from home and event detail screens.")
 @SecurityRequirement(name = "bearerAuth")
 public class BookmarkController {
+
+    private final BookmarkService bookmarkService;
+
+    public BookmarkController(BookmarkService bookmarkService) {
+        this.bookmarkService = bookmarkService;
+    }
 
     @PostMapping("/{eventId}")
     @Operation(
@@ -52,6 +59,7 @@ public class BookmarkController {
             @Parameter(description = "Event UUID to bookmark", example = "550e8400-e29b-41d4-a716-446655440000")
             @PathVariable UUID eventId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        bookmarkService.addBookmark(userDetails.id(), eventId);
         return ApiResponse.ok();
     }
 
@@ -84,6 +92,7 @@ public class BookmarkController {
             @Parameter(description = "Event UUID to unbookmark", example = "550e8400-e29b-41d4-a716-446655440000")
             @PathVariable UUID eventId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        bookmarkService.removeBookmark(userDetails.id(), eventId);
         return ApiResponse.ok();
     }
 }

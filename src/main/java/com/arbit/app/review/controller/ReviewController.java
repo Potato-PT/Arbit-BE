@@ -78,7 +78,7 @@ public class ReviewController {
     public ApiResponse<List<ReviewResponse>> getReviews(
             @Parameter(description = "Event UUID to retrieve reviews for", example = "550e8400-e29b-41d4-a716-446655440000")
             @PathVariable UUID eventId) {
-        return ApiResponse.success(List.of());
+        return ApiResponse.success(reviewService.getReviews(eventId));
     }
 
     @PostMapping

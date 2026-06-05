@@ -16,6 +16,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     Optional<Review> findByUserIdAndEventId(UUID userId, UUID eventId);
 
+    List<Review> findAllByEventIdOrderByCreatedAtDesc(UUID eventId);
+
     @Query("""
             select r
             from Review r
