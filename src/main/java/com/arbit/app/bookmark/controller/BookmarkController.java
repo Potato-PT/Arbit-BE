@@ -78,11 +78,11 @@ public class BookmarkController {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Bookmark not found")
             }
     )
-    public ApiResponse<Void> removeBookmark(
+    public ResponseEntity<Void> removeBookmark(
             @Parameter(description = "Event UUID to unbookmark", example = "ca8de333-e82a-4360-906c-1b5467f51561")
             @PathVariable UUID eventId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         bookmarkService.removeBookmark(userDetails.id(), eventId);
-        return ApiResponse.ok();
+        return ResponseEntity.noContent().build();
     }
 }

@@ -63,12 +63,15 @@ jobs:
           cp build/libs/*.jar deploy/build/libs/
           printf '%s\n' "${ARBIT_AI_ENV}" > deploy/arbit-ai.env
           {
+            echo "SPRING_PROFILES_ACTIVE=default"
             echo "MYSQL_DATABASE=${MYSQL_DATABASE}"
             echo "MYSQL_USER=${MYSQL_USER}"
             echo "MYSQL_PASSWORD=${APP_DB_PASSWORD}"
             echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
+            echo "APP_DB_URL=jdbc:mysql://arbit-db:3306/${MYSQL_DATABASE}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
             echo "APP_DB_USERNAME=${MYSQL_USER}"
             echo "APP_DB_PASSWORD=${APP_DB_PASSWORD}"
+            echo "ARBIT_AI_BASE_URL=http://arbit-ai:8000"
             echo "GCP_JWT_SECRET=${GCP_JWT_SECRET}"
             echo "KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}"
             echo "KAKAO_LOCAL_BASE_URL=${KAKAO_LOCAL_BASE_URL}"
