@@ -4,9 +4,9 @@ spring:
   config:
     import: optional:file:.env[.properties]
   datasource:
-    url: ${APP_DB_URL:${GCP_DB_URL}}
-    username: ${APP_DB_USERNAME:${GCP_DB_USERNAME}}
-    password: ${APP_DB_PASSWORD:${GCP_DB_PASSWORD:}}
+    url: ${APP_DB_URL}
+    username: ${APP_DB_USERNAME}
+    password: ${APP_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:

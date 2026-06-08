@@ -34,9 +34,6 @@ services:
       APP_DB_URL: ${APP_DB_URL:-jdbc:mysql://arbit-db:3306/${MYSQL_DATABASE:-arbit}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
       APP_DB_USERNAME: ${APP_DB_USERNAME:-${MYSQL_USER:-arbit}}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:-${MYSQL_PASSWORD}}
-      GCP_DB_URL: ${GCP_DB_URL:-${APP_DB_URL}}
-      GCP_DB_USERNAME: ${GCP_DB_USERNAME:-${APP_DB_USERNAME}}
-      GCP_DB_PASSWORD: ${GCP_DB_PASSWORD:-${APP_DB_PASSWORD}}
       GCP_JWT_SECRET: ${GCP_JWT_SECRET:?GCP_JWT_SECRET must be set}
       JWT_ACCESS_TOKEN_VALIDITY_MS: ${JWT_ACCESS_TOKEN_VALIDITY_MS:-3600000}
       JWT_REFRESH_TOKEN_VALIDITY_MS: ${JWT_REFRESH_TOKEN_VALIDITY_MS:-604800000}
@@ -64,8 +61,15 @@ services:
       dockerfile: Dockerfile
     env_file:
       - ../arbit-ai/.env
+    environment:
+      APP_DB_URL: ${APP_DB_URL:-jdbc:mysql://arbit-db:3306/${MYSQL_DATABASE:-arbit}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+      APP_DB_USERNAME: ${APP_DB_USERNAME:-${MYSQL_USER:-arbit}}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-${MYSQL_PASSWORD}}
     ports:
       - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - arbit-network
     restart: unless-stopped
