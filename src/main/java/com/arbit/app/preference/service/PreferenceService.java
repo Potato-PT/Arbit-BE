@@ -29,7 +29,7 @@ import org.springframework.web.client.RestClientException;
 public class PreferenceService {
 
     private static final Logger log = LoggerFactory.getLogger(PreferenceService.class);
-    private static final int SEED_EVENT_SAMPLE_SIZE = 10;
+    private static final int SEED_EVENT_SAMPLE_SIZE = 50;
     private static final int RANDOM_STATE_BOUND = 1_000_000;
 
     private final UserRepository userRepository;
