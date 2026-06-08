@@ -12,32 +12,4 @@ out/
 
 src/main/resources/application-local.yml
 src/test/*
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
-!src/test/java/
-!src/test/java/com/
-!src/test/java/com/arbit/
-!src/test/java/com/arbit/app/
-src/test/java/com/arbit/app/*
-<<<<<<< Updated upstream
-!src/test/java/com/arbit/app/event/
-!src/test/java/com/arbit/app/event/controller/
-!src/test/java/com/arbit/app/event/controller/EventControllerSearchTest.java
-=======
-!src/test/java/com/arbit/app/auth/
-src/test/java/com/arbit/app/auth/*
-!src/test/java/com/arbit/app/auth/service/
-!src/test/java/com/arbit/app/auth/service/AuthServiceTest.java
-!src/test/java/com/arbit/app/bookmark/
-src/test/java/com/arbit/app/bookmark/*
-!src/test/java/com/arbit/app/bookmark/controller/
-!src/test/java/com/arbit/app/bookmark/controller/BookmarkControllerTest.java
-!src/test/java/com/arbit/app/event/
-!src/test/java/com/arbit/app/event/controller/
-!src/test/java/com/arbit/app/event/controller/EventControllerSearchTest.java
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 node_modules/*
