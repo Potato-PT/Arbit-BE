@@ -1,4 +1,28 @@
 services:
+  db:
+    image: mysql:8.0
+    container_name: arbit-db
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-arbit}
+      MYSQL_USER: ${MYSQL_USER:-arbit}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-${APP_DB_PASSWORD:?APP_DB_PASSWORD must be set}}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u$${MYSQL_USER} -p$${MYSQL_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - arbit-network
+    restart: unless-stopped
+
   app:
     build:
       context: .
@@ -7,9 +31,9 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
       SERVER_PORT: 8080
-      APP_DB_URL: ${APP_DB_URL:-${GCP_DB_URL}}
-      APP_DB_USERNAME: ${APP_DB_USERNAME:-${GCP_DB_USERNAME}}
-      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-${GCP_DB_PASSWORD}}
+      APP_DB_URL: ${APP_DB_URL:-jdbc:mysql://arbit-db:3306/${MYSQL_DATABASE:-arbit}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+      APP_DB_USERNAME: ${APP_DB_USERNAME:-${MYSQL_USER:-arbit}}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-${MYSQL_PASSWORD}}
       GCP_DB_URL: ${GCP_DB_URL:-${APP_DB_URL}}
       GCP_DB_USERNAME: ${GCP_DB_USERNAME:-${APP_DB_USERNAME}}
       GCP_DB_PASSWORD: ${GCP_DB_PASSWORD:-${APP_DB_PASSWORD}}
@@ -25,7 +49,10 @@ services:
     volumes:
       - app-uploads:/app/uploads
     depends_on:
-      - arbit-ai
+      db:
+        condition: service_healthy
+      arbit-ai:
+        condition: service_started
     networks:
       - arbit-network
     restart: unless-stopped
@@ -45,6 +72,7 @@ services:
 
 volumes:
   app-uploads:
+  db-data:
 
 networks:
   arbit-network:

@@ -42,24 +42,33 @@ jobs:
 
       - name: Prepare Deploy Bundle
         env:
-          GCP_DB_URL: ${{ vars.GCP_DB_URL }}
-          GCP_DB_USERNAME: ${{ vars.GCP_DB_USERNAME }}
           GCP_JWT_SECRET: ${{ secrets.GCP_JWT_SECRET }}
-          GCP_DB_PASSWORD: ${{ secrets.GCP_DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ vars.MYSQL_DATABASE || 'arbit' }}
+          MYSQL_USER: ${{ vars.MYSQL_USER || 'arbit' }}
+          APP_DB_PASSWORD: ${{ secrets.APP_DB_PASSWORD }}
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          ARBIT_AI_ENV: ${{ secrets.ARBIT_AI_ENV }}
           KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
           KAKAO_LOCAL_BASE_URL: https://dapi.kakao.com
           JWT_ACCESS_TOKEN_VALIDITY_MS: 3600000
           JWT_REFRESH_TOKEN_VALIDITY_MS: 604800000
         run: |
+          test -n "${APP_DB_PASSWORD}" || { echo 'APP_DB_PASSWORD secret is required'; exit 1; }
+          test -n "${MYSQL_ROOT_PASSWORD}" || { echo 'MYSQL_ROOT_PASSWORD secret is required'; exit 1; }
+          test -n "${ARBIT_AI_ENV}" || { echo 'ARBIT_AI_ENV secret is required'; exit 1; }
           mkdir -p deploy/build/libs
           cp Dockerfile deploy/Dockerfile
           cp docker-compose.yml deploy/docker-compose.yml
           cp docker-entrypoint.sh deploy/docker-entrypoint.sh
           cp build/libs/*.jar deploy/build/libs/
+          printf '%s\n' "${ARBIT_AI_ENV}" > deploy/arbit-ai.env
           {
-            echo "GCP_DB_URL=${GCP_DB_URL}"
-            echo "GCP_DB_USERNAME=${GCP_DB_USERNAME}"
-            echo "GCP_DB_PASSWORD=${GCP_DB_PASSWORD}"
+            echo "MYSQL_DATABASE=${MYSQL_DATABASE}"
+            echo "MYSQL_USER=${MYSQL_USER}"
+            echo "MYSQL_PASSWORD=${APP_DB_PASSWORD}"
+            echo "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}"
+            echo "APP_DB_USERNAME=${MYSQL_USER}"
+            echo "APP_DB_PASSWORD=${APP_DB_PASSWORD}"
             echo "GCP_JWT_SECRET=${GCP_JWT_SECRET}"
             echo "KAKAO_REST_API_KEY=${KAKAO_REST_API_KEY}"
             echo "KAKAO_LOCAL_BASE_URL=${KAKAO_LOCAL_BASE_URL}"
@@ -86,6 +95,11 @@ jobs:
             cd /home/lalalove0310/arbit
             ls -la
             test -f .env || { echo '.env not found after rsync'; exit 1; }
+            test -f arbit-ai.env || { echo 'arbit-ai.env not found after rsync'; exit 1; }
+            mkdir -p ../arbit-ai
+            cp arbit-ai.env ../arbit-ai/.env
+            chmod 600 ../arbit-ai/.env
+            rm -f arbit-ai.env
             docker compose up -d --build
             docker compose logs --tail=200 app
           "
