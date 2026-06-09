@@ -7,13 +7,9 @@ import com.arbit.app.common.exception.ErrorCode;
 import com.arbit.app.event.dto.EventDetailResponse;
 import com.arbit.app.event.dto.EventResponse;
 import com.arbit.app.event.entity.Event;
-import com.arbit.app.event.entity.EventDetailViewLog;
 import com.arbit.app.event.entity.EventStatus;
-import com.arbit.app.event.repository.EventDetailViewLogRepository;
 import com.arbit.app.event.repository.EventKeywordRepository;
 import com.arbit.app.event.repository.EventRepository;
-import com.arbit.app.user.entity.User;
-import com.arbit.app.user.repository.UserRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -27,17 +23,14 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventKeywordRepository eventKeywordRepository;
     private final BookmarkRepository bookmarkRepository;
-    private final UserRepository userRepository;
-    private final EventDetailViewLogRepository eventDetailViewLogRepository;
+    private final EventActionService eventActionService;
 
     public EventService(EventRepository eventRepository, EventKeywordRepository eventKeywordRepository,
-                        BookmarkRepository bookmarkRepository, UserRepository userRepository,
-                        EventDetailViewLogRepository eventDetailViewLogRepository) {
+                        BookmarkRepository bookmarkRepository, EventActionService eventActionService) {
         this.eventRepository = eventRepository;
         this.eventKeywordRepository = eventKeywordRepository;
         this.bookmarkRepository = bookmarkRepository;
-        this.userRepository = userRepository;
-        this.eventDetailViewLogRepository = eventDetailViewLogRepository;
+        this.eventActionService = eventActionService;
     }
 
     @Transactional
@@ -98,11 +91,6 @@ public class EventService {
         if (userDetails == null) {
             return;
         }
-        User user = userRepository.findById(userDetails.id())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-        eventDetailViewLogRepository.save(EventDetailViewLog.builder()
-                .user(user)
-                .event(event)
-                .build());
+        eventActionService.recordDetailView(userDetails.id(), event);
     }
 }

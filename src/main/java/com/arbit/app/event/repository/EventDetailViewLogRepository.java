@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface EventDetailViewLogRepository extends JpaRepository<EventDetailViewLog, Long> {
 
     List<EventDetailViewLog> findAllByUserId(UUID userId);
+
+    void deleteAllByUserId(UUID userId);
 }

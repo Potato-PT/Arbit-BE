@@ -32,11 +32,11 @@ public class PreferenceController {
     @GetMapping("/api/preferences/categories")
     @Operation(
             summary = "Get seed events for choosing preferences",
-            description = "Generates a random state, calls the seed-event service, and returns 50 events with event_id, title, genre, and posterImage.",
+            description = "Generates a random state, calls the seed-event service, and returns 20 events with event_id, title, genre, and posterImage.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "Seed events retrieved successfully",
+                            description = "Exactly 20 seed events retrieved successfully",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = PreferenceCategoriesApiResponse.class),
@@ -422,7 +422,11 @@ public class PreferenceController {
 
     private record PreferenceCategoriesApiResponse(
             boolean success,
-            @ArraySchema(schema = @Schema(implementation = PreferenceCategoriesResponse.class))
+            @ArraySchema(
+                    minItems = 20,
+                    maxItems = 20,
+                    schema = @Schema(implementation = PreferenceCategoriesResponse.class)
+            )
             List<PreferenceCategoriesResponse> data,
             Object error
     ) {

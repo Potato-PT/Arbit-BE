@@ -1,0 +1,5 @@
+storage:
+  gcs:
+    project-id: ${GCP_PROJECT_ID:}
+    bucket-name: ${GCS_BUCKET_NAME}
+    public-base-url: ${GCS_PUBLIC_BASE_URL:https://storage.googleapis.com/${GCS_BUCKET_NAME}}

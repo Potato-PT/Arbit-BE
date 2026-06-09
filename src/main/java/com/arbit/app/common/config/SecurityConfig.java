@@ -45,6 +45,7 @@ public class SecurityConfig {
                                 "/api/auth/guest-login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/home").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/preferences/categories").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/events/*/actions/**").authenticated()
                         .requestMatchers("/api/events", "/api/events/**").permitAll()
                         .anyRequest().authenticated()
                 )

@@ -40,6 +40,9 @@ services:
       KAKAO_LOCAL_BASE_URL: ${KAKAO_LOCAL_BASE_URL:-https://dapi.kakao.com}
       KAKAO_REST_API_KEY: ${KAKAO_REST_API_KEY:-}
       ARBIT_AI_BASE_URL: ${ARBIT_AI_BASE_URL:-http://arbit-ai:8000}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-}
+      GCS_PUBLIC_BASE_URL: ${GCS_PUBLIC_BASE_URL:-}
       STORAGE_LOCAL_UPLOAD_DIR: /app/uploads
     ports:
       - "8080:8080"

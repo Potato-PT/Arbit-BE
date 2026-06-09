@@ -6,6 +6,8 @@ import com.arbit.app.category.repository.UserCategoryRepository;
 import com.arbit.app.common.exception.BusinessException;
 import com.arbit.app.common.exception.ErrorCode;
 import com.arbit.app.event.entity.Event;
+import com.arbit.app.event.repository.EventActionLogRepository;
+import com.arbit.app.event.repository.EventDetailViewLogRepository;
 import com.arbit.app.keyword.repository.UserPreferenceKeywordRepository;
 import com.arbit.app.recommendation.repository.RecommendationRepository;
 import com.arbit.app.review.entity.Review;
@@ -37,6 +39,8 @@ public class UserMeService {
     private final ReviewRepository reviewRepository;
     private final UserPreferenceKeywordRepository userPreferenceKeywordRepository;
     private final RecommendationRepository recommendationRepository;
+    private final EventActionLogRepository eventActionLogRepository;
+    private final EventDetailViewLogRepository eventDetailViewLogRepository;
     private final ObjectProvider<StorageService> storageServiceProvider;
 
     public UserMeService(UserRepository userRepository,
@@ -45,6 +49,8 @@ public class UserMeService {
                          ReviewRepository reviewRepository,
                          UserPreferenceKeywordRepository userPreferenceKeywordRepository,
                          RecommendationRepository recommendationRepository,
+                         EventActionLogRepository eventActionLogRepository,
+                         EventDetailViewLogRepository eventDetailViewLogRepository,
                          ObjectProvider<StorageService> storageServiceProvider) {
         this.userRepository = userRepository;
         this.bookmarkRepository = bookmarkRepository;
@@ -52,6 +58,8 @@ public class UserMeService {
         this.reviewRepository = reviewRepository;
         this.userPreferenceKeywordRepository = userPreferenceKeywordRepository;
         this.recommendationRepository = recommendationRepository;
+        this.eventActionLogRepository = eventActionLogRepository;
+        this.eventDetailViewLogRepository = eventDetailViewLogRepository;
         this.storageServiceProvider = storageServiceProvider;
     }
 
@@ -127,6 +135,8 @@ public class UserMeService {
         userCategoryRepository.deleteAllByUserId(userId);
         recommendationRepository.deleteAllByUserId(userId);
         userPreferenceKeywordRepository.deleteAllByUserId(userId);
+        eventActionLogRepository.deleteAllByUserId(userId);
+        eventDetailViewLogRepository.deleteAllByUserId(userId);
         reviewRepository.deleteAllByUserId(userId);
 
         reviewedEvents.forEach(this::updateAverageRating);
