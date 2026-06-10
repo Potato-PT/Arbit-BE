@@ -56,10 +56,11 @@ jobs:
           test -n "${APP_DB_PASSWORD}" || { echo 'APP_DB_PASSWORD secret is required'; exit 1; }
           test -n "${MYSQL_ROOT_PASSWORD}" || { echo 'MYSQL_ROOT_PASSWORD secret is required'; exit 1; }
           test -n "${ARBIT_AI_ENV}" || { echo 'ARBIT_AI_ENV secret is required'; exit 1; }
-          mkdir -p deploy/build/libs
+          mkdir -p deploy/build/libs deploy/nginx
           cp Dockerfile deploy/Dockerfile
           cp docker-compose.yml deploy/docker-compose.yml
           cp docker-entrypoint.sh deploy/docker-entrypoint.sh
+          cp nginx/nginx.conf deploy/nginx/nginx.conf
           cp build/libs/*.jar deploy/build/libs/
           printf '%s\n' "${ARBIT_AI_ENV}" > deploy/arbit-ai.env
           {
@@ -99,6 +100,7 @@ jobs:
             ls -la
             test -f .env || { echo '.env not found after rsync'; exit 1; }
             test -f arbit-ai.env || { echo 'arbit-ai.env not found after rsync'; exit 1; }
+            test -f nginx/nginx.conf || { echo 'nginx/nginx.conf not found after rsync'; exit 1; }
             mkdir -p ../arbit-ai
             cp arbit-ai.env ../arbit-ai/.env
             chmod 600 ../arbit-ai/.env
