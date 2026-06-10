@@ -45,7 +45,7 @@ services:
       GCS_PUBLIC_BASE_URL: ${GCS_PUBLIC_BASE_URL:-}
       STORAGE_LOCAL_UPLOAD_DIR: /app/uploads
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       - app-uploads:/app/uploads
     depends_on:
@@ -69,26 +69,10 @@ services:
       APP_DB_USERNAME: ${APP_DB_USERNAME:-${MYSQL_USER:-arbit}}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:-${MYSQL_PASSWORD}}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       db:
         condition: service_healthy
-    networks:
-      - arbit-network
-    restart: unless-stopped
-
-  nginx:
-    image: nginx:alpine
-    container_name: arbit-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    depends_on:
-      app:
-        condition: service_started
     networks:
       - arbit-network
     restart: unless-stopped

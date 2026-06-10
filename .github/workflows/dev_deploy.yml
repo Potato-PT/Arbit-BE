@@ -96,6 +96,7 @@ jobs:
       - name: Build And Restart
         run: |
           ssh -p "${{ vars.GCP_PORT || 22 }}" "${{ vars.GCP_USERNAME }}@${{ vars.GCP_HOST }}" "
+            set -e
             cd /home/lalalove0310/arbit
             ls -la
             test -f .env || { echo '.env not found after rsync'; exit 1; }
@@ -106,6 +107,9 @@ jobs:
             chmod 600 ../arbit-ai/.env
             rm -f arbit-ai.env
             docker compose up -d --build
+            sudo install -m 644 nginx/nginx.conf /etc/nginx/sites-available/arbit.conf
+            sudo ln -sfn /etc/nginx/sites-available/arbit.conf /etc/nginx/sites-enabled/arbit.conf
+            sudo nginx -t && sudo systemctl reload nginx
             docker compose ps -a
             docker compose logs --tail=200 db
             docker compose logs --tail=200 app
