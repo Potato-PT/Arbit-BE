@@ -23,7 +23,13 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableConfigurationProperties({JwtProperties.class, KakaoLocalProperties.class, ArbitAiProperties.class, SeedEventProperties.class})
+@EnableConfigurationProperties({
+        JwtProperties.class,
+        KakaoLocalProperties.class,
+        ArbitAiProperties.class,
+        SeedEventProperties.class,
+        CorsProperties.class
+})
 public class SecurityConfig {
 
     @Bean

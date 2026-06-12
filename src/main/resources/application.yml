@@ -33,6 +33,10 @@ kakao:
 arbit-ai:
   base-url: ${ARBIT_AI_BASE_URL:http://arbit-ai:8000}
 
+app:
+  cors:
+    allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:https://piec.store,https://arbit-umber.vercel.app,http://localhost:[*],http://127.0.0.1:[*]}
+
 server:
   port: ${SERVER_PORT:8080}
   error:

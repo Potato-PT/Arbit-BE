@@ -18,16 +18,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebResourceConfig implements WebMvcConfigurer {
 
-    private static final List<String> ALLOWED_ORIGINS = List.of(
-            "https://piec.store",
-            "https://arbit-umber.vercel.app",
-            "http://localhost:5173",
-            "http://localhost:5137",
-            "http://localhost:3000",
-            "http://127.0.0.1:5173",
-            "http://127.0.0.1:5137",
-            "http://127.0.0.1:3000"
-    );
     private static final List<String> ALLOWED_METHODS = List.of(
             HttpMethod.GET.name(),
             HttpMethod.POST.name(),
@@ -39,11 +29,14 @@ public class WebResourceConfig implements WebMvcConfigurer {
 
     private final String publicBasePath;
     private final Path uploadRoot;
+    private final CorsProperties corsProperties;
 
     public WebResourceConfig(@Value("${storage.local.upload-dir:uploads}") String uploadDir,
-                             @Value("${storage.local.public-base-path:/uploads}") String publicBasePath) {
+                             @Value("${storage.local.public-base-path:/uploads}") String publicBasePath,
+                             CorsProperties corsProperties) {
         this.publicBasePath = publicBasePath;
         this.uploadRoot = Paths.get(uploadDir).toAbsolutePath().normalize();
+        this.corsProperties = corsProperties;
     }
 
     @Override
@@ -55,7 +48,7 @@ public class WebResourceConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins(ALLOWED_ORIGINS.toArray(String[]::new))
+                .allowedOriginPatterns(corsProperties.allowedOriginPatterns().toArray(String[]::new))
                 .allowedMethods(ALLOWED_METHODS.toArray(String[]::new))
                 .allowedHeaders("*")
                 .exposedHeaders(HttpHeaders.LOCATION)
@@ -65,7 +58,7 @@ public class WebResourceConfig implements WebMvcConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(ALLOWED_ORIGINS);
+        configuration.setAllowedOriginPatterns(corsProperties.allowedOriginPatterns());
         configuration.setAllowedMethods(ALLOWED_METHODS);
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of(HttpHeaders.LOCATION));
