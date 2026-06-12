@@ -373,11 +373,11 @@ public class PreferenceController {
                                             {
                                               "success": true,
                                               "data": [
-                                                "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb",
-                                                "25b9139b-3ed2-4923-907f-59322a55bc98",
-                                                "29acf197-aab6-4b3d-957d-ccd6f420e098",
-                                                "d4e90ffe-f663-4ff4-90dd-60db60c8f60a",
-                                                "3c48c48e-97e6-41ab-ad4e-2c26a79c48a7"
+                                                "04ba876b-fc95-4b84-94ef-589cb670459c",
+                                                "06d24430-f141-4d3a-a1be-712c31510269",
+                                                "2541d62f-e5d9-4334-8199-dbdf9ffbe63e",
+                                                "29175e70-288e-4b2a-91d5-b555c68c0093",
+                                                "2d68849a-f43b-44bc-88e3-24f839869978"
                                               ],
                                               "error": null
                                             }
@@ -397,11 +397,11 @@ public class PreferenceController {
                                                     {
                                                       "success": true,
                                                       "data": [
-                                                "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb",
-                                                "25b9139b-3ed2-4923-907f-59322a55bc98",
-                                                "29acf197-aab6-4b3d-957d-ccd6f420e098",
-                                                "d4e90ffe-f663-4ff4-90dd-60db60c8f60a",
-                                                "3c48c48e-97e6-41ab-ad4e-2c26a79c48a7"
+                                                "04ba876b-fc95-4b84-94ef-589cb670459c",
+                                                "06d24430-f141-4d3a-a1be-712c31510269",
+                                                "2541d62f-e5d9-4334-8199-dbdf9ffbe63e",
+                                                "29175e70-288e-4b2a-91d5-b555c68c0093",
+                                                "2d68849a-f43b-44bc-88e3-24f839869978"
                                                       ],
                                                       "error": null
                                                     }
@@ -409,7 +409,10 @@ public class PreferenceController {
                                     )
                             )
                     ),
-                    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request"),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "Invalid, duplicate, or unavailable preference event IDs"
+                    ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication is required")
             }
     )
@@ -437,7 +440,7 @@ public class PreferenceController {
             @ArraySchema(
                     minItems = 5,
                     maxItems = 20,
-                    schema = @Schema(type = "string", format = "uuid", example = "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb")
+                    schema = @Schema(type = "string", format = "uuid", example = "04ba876b-fc95-4b84-94ef-589cb670459c")
             )
             List<UUID> data,
             Object error

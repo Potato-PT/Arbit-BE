@@ -95,6 +95,12 @@ public class PreferenceRecommendationService {
                 exception.getResponseBodyAsString(),
                 exception
         );
+        if (exception.getStatusCode().is4xxClientError()) {
+            return new BusinessException(
+                    ErrorCode.INVALID_REQUEST,
+                    "Selected preference events are invalid or unavailable."
+            );
+        }
         return new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to create recommendations.");
     }
 
