@@ -2,8 +2,11 @@ package com.arbit.app.common.exception;
 
 import com.arbit.app.common.response.ApiResponse;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,9 +25,19 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception) {
+    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException exception,
+                                                                     HttpServletRequest request) {
         ErrorCode errorCode = exception.getErrorCode();
+        if (errorCode == ErrorCode.UNAUTHORIZED) {
+            log.warn("Business exception returned 401. method={}, uri={}, authorizationHeaderPresent={}, message={}",
+                    request.getMethod(),
+                    request.getRequestURI(),
+                    request.getHeader("Authorization") != null,
+                    exception.getMessage());
+        }
         return json(errorCode.status().value(), ApiResponse.error(errorCode.name(), exception.getMessage()));
     }
 

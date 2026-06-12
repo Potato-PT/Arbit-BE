@@ -5,6 +5,8 @@ import com.arbit.app.auth.security.JwtProperties;
 import com.arbit.app.auth.security.RestAccessDeniedHandler;
 import com.arbit.app.auth.security.RestAuthenticationEntryPoint;
 import com.arbit.app.auth.service.KakaoLocalProperties;
+import com.arbit.app.event.security.EventListMatchRequestMatcher;
+import com.arbit.app.event.security.EventListSortValidationFilter;
 import com.arbit.app.preference.service.ArbitAiProperties;
 import com.arbit.app.preference.service.SeedEventProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -34,6 +36,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter,
+                                                   EventListSortValidationFilter eventListSortValidationFilter,
+                                                   EventListMatchRequestMatcher eventListMatchRequestMatcher,
                                                    RestAuthenticationEntryPoint authenticationEntryPoint,
                                                    RestAccessDeniedHandler accessDeniedHandler)
             throws Exception {
@@ -52,10 +56,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/home").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/preferences/categories").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/events/*/actions/**").authenticated()
+                        .requestMatchers(eventListMatchRequestMatcher).authenticated()
                         .requestMatchers("/api/events", "/api/events/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(eventListSortValidationFilter, JwtAuthenticationFilter.class)
                 .build();
     }
 

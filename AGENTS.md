@@ -271,6 +271,10 @@ Environment rules:
 - Never commit secrets.
 - Use `.env` for local secrets.
 - Keep `.env` in `.gitignore`.
+- Never modify `.gitignore` unless the user explicitly asks for a `.gitignore` change.
+- Keep the default server configuration for deployment on the VM instance with Docker Compose.
+- When running against `arbit_local`, apply local database and server settings only through temporary process environment variables; do not persist local settings in deployment configuration files.
+- After stopping a locally executed server, leave the project configured for VM instance Docker deployment.
 - When running Arbit locally, use the local MySQL database.
 - When the user types `restart`, start both the `Arbit` and `Arbit-AI` servers at the same time using the local MySQL database.
 - For `restart`, use a dedicated visible run terminal and execute the run commands there so server logs remain visible.

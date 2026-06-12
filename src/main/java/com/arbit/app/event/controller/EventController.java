@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
@@ -82,11 +83,14 @@ public class EventController {
     }
 
     @GetMapping
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Get event list",
             description = """
                     Returns a filtered and sorted list of events for the event listing screen.
                     This endpoint is separate from keyword search.
+                    The match sort requires authentication and returns stored personalized
+                    recommendations ordered by match score descending.
                     """,
             parameters = {
                     @Parameter(name = "category", in = ParameterIn.QUERY, description = "Single category filter."),
@@ -113,15 +117,29 @@ public class EventController {
                     @Parameter(
                             name = "sort",
                             in = ParameterIn.QUERY,
-                            description = "Sort option. Defaults to deadline.",
+                            description = """
+                                    Sort option. Defaults to deadline when omitted. Only a single lowercase value is
+                                    accepted. Empty, repeated, uppercase, or unsupported values return 400.
+                                    match requires bearer authentication.
+                                    """,
                             schema = @Schema(type = "string", allowableValues = {"match", "deadline", "latest", "rating"}, defaultValue = "deadline")
                     )
             },
-            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "Event list retrieved successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventsApiResponse.class))
-            )
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Event list retrieved successfully",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventsApiResponse.class))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "sort is empty, repeated, uppercase, or unsupported"
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "Authentication is required when sort=match"
+                    )
+            }
     )
     public ApiResponse<List<EventResponse>> getEvents(
             @RequestParam(required = false) String category,
@@ -129,10 +147,12 @@ public class EventController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "deadline") String sort,
-            @Parameter(hidden = true) @RequestParam(defaultValue = "ONGOING") EventStatus status) {
+            @Parameter(hidden = true) @RequestParam(defaultValue = "ONGOING") EventStatus status,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
         log.info("Event list request received. category={}, district={}, startDate={}, endDate={}, sort={}, status={}",
                 category, district, startDate, endDate, sort, status);
-        return ApiResponse.success(eventService.getEvents(category, district, startDate, endDate, sort, status));
+        return ApiResponse.success(eventService.getEvents(
+                category, district, startDate, endDate, sort, status, userDetails));
     }
 
     @Hidden
