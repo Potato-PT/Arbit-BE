@@ -5,11 +5,13 @@ import com.arbit.app.bookmark.repository.BookmarkRepository;
 import com.arbit.app.common.exception.BusinessException;
 import com.arbit.app.common.exception.ErrorCode;
 import com.arbit.app.event.dto.EventDetailResponse;
+import com.arbit.app.event.dto.MatchedEventResponse;
 import com.arbit.app.event.dto.EventResponse;
 import com.arbit.app.event.entity.Event;
 import com.arbit.app.event.entity.EventStatus;
 import com.arbit.app.event.repository.EventKeywordRepository;
 import com.arbit.app.event.repository.EventRepository;
+import com.arbit.app.recommendation.repository.RecommendationRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -23,13 +25,16 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventKeywordRepository eventKeywordRepository;
     private final BookmarkRepository bookmarkRepository;
+    private final RecommendationRepository recommendationRepository;
     private final EventActionService eventActionService;
 
     public EventService(EventRepository eventRepository, EventKeywordRepository eventKeywordRepository,
-                        BookmarkRepository bookmarkRepository, EventActionService eventActionService) {
+                        BookmarkRepository bookmarkRepository, RecommendationRepository recommendationRepository,
+                        EventActionService eventActionService) {
         this.eventRepository = eventRepository;
         this.eventKeywordRepository = eventKeywordRepository;
         this.bookmarkRepository = bookmarkRepository;
+        this.recommendationRepository = recommendationRepository;
         this.eventActionService = eventActionService;
     }
 
@@ -45,6 +50,7 @@ public class EventService {
 
     public List<EventResponse> getEvents(String category, List<String> districts, LocalDate startDate,
                                          LocalDate endDate, String sort, EventStatus status) {
+        String normalizedSort = EventListSortPolicy.normalize(sort);
         List<String> normalizedDistricts = normalize(districts);
         return eventRepository.findByStatusOrderByEndDateAsc(
                         status == EventStatus.ONGOING,
@@ -56,9 +62,39 @@ public class EventService {
                         normalizedDistricts == null ? List.of("__NO_DISTRICT__") : normalizedDistricts,
                         startDate,
                         endDate,
-                        normalizeSort(sort)).stream()
+                        normalizedSort).stream()
                 .map(EventResponse::from)
                 .toList();
+    }
+
+    public List<MatchedEventResponse> getMatchedEvents(String category, List<String> districts, LocalDate startDate,
+                                                       LocalDate endDate, EventStatus status,
+                                                       CustomUserDetails userDetails) {
+        String normalizedCategory = normalize(category);
+        List<String> normalizedDistricts = normalize(districts);
+        LocalDate today = EventStatus.today();
+
+        return recommendationRepository.findByUserIdOrderByMatchScoreDesc(userDetails.id()).stream()
+                .filter(recommendation -> matchesFilters(
+                        recommendation.getEvent(),
+                        normalizedCategory,
+                        normalizedDistricts,
+                        startDate,
+                        endDate,
+                        status,
+                        today
+                ))
+                .map(MatchedEventResponse::from)
+                .toList();
+    }
+
+    private boolean matchesFilters(Event event, String category, List<String> districts, LocalDate startDate,
+                                   LocalDate endDate, EventStatus status, LocalDate today) {
+        return EventStatus.from(event.getStartDate(), event.getEndDate(), today) == status
+                && (category == null || event.getCategory().getName().equals(category))
+                && (districts == null || districts.contains(event.getDistrict()))
+                && (startDate == null || !event.getStartDate().isBefore(startDate))
+                && (endDate == null || !event.getEndDate().isAfter(endDate));
     }
 
     private String normalize(String value) {
@@ -78,13 +114,6 @@ public class EventService {
         List<String> normalized = values.stream()
                 .toList();
         return normalized.isEmpty() ? null : normalized;
-    }
-
-    private String normalizeSort(String sort) {
-        if ("latest".equals(sort) || "rating".equals(sort) || "match".equals(sort)) {
-            return sort;
-        }
-        return "deadline";
     }
 
     private void saveDetailViewLog(CustomUserDetails userDetails, Event event) {

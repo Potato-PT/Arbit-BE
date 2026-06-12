@@ -14,13 +14,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
@@ -29,7 +25,6 @@ import org.springframework.web.client.RestClientException;
 @Service
 public class PreferenceService {
 
-    private static final Logger log = LoggerFactory.getLogger(PreferenceService.class);
     private static final int SEED_EVENT_SAMPLE_SIZE = 20;
     private static final int RANDOM_STATE_BOUND = 1_000_000;
     private static final int MIN_PREFERENCE_EVENT_COUNT = 5;
@@ -39,21 +34,18 @@ public class PreferenceService {
     private final EventRepository eventRepository;
     private final UserPreferenceEventRepository userPreferenceEventRepository;
     private final PreferenceRecommendationService recommendationService;
-    private final Executor recommendationTaskExecutor;
     private final RestClient arbitAiRestClient;
 
     public PreferenceService(UserRepository userRepository,
                              EventRepository eventRepository,
                              UserPreferenceEventRepository userPreferenceEventRepository,
                              PreferenceRecommendationService recommendationService,
-                             @Qualifier("recommendationTaskExecutor") Executor recommendationTaskExecutor,
                              RestClient.Builder restClientBuilder,
                              ArbitAiProperties arbitAiProperties) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.userPreferenceEventRepository = userPreferenceEventRepository;
         this.recommendationService = recommendationService;
-        this.recommendationTaskExecutor = recommendationTaskExecutor;
         this.arbitAiRestClient = restClientBuilder
                 .baseUrl(arbitAiProperties.baseUrl())
                 .build();
@@ -103,14 +95,7 @@ public class PreferenceService {
 
         List<UUID> requestedEventIds = List.copyOf(eventIds);
         savePreferenceEvents(user, requestedEventIds);
-        recommendationTaskExecutor.execute(() -> {
-            try {
-                recommendationService.createRecommendations(userId, requestedEventIds);
-            } catch (RuntimeException exception) {
-                log.error("Recommendation background task failed. userId={}, eventIds={}",
-                        userId, requestedEventIds, exception);
-            }
-        });
+        recommendationService.createRecommendations(userId, requestedEventIds);
     }
 
     private void validatePreferenceEventIds(List<UUID> eventIds) {

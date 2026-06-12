@@ -12,4 +12,5 @@ public interface RecommendationRepository extends JpaRepository<Recommendation, 
 
     @EntityGraph(attributePaths = {"event", "event.category"})
     List<Recommendation> findByUserIdOrderByMatchScoreDesc(UUID userId);
+
 }
