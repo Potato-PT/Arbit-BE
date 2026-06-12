@@ -12,6 +12,7 @@ import com.arbit.app.user.repository.UserRepository;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadLocalRandom;
@@ -31,6 +32,8 @@ public class PreferenceService {
     private static final Logger log = LoggerFactory.getLogger(PreferenceService.class);
     private static final int SEED_EVENT_SAMPLE_SIZE = 20;
     private static final int RANDOM_STATE_BOUND = 1_000_000;
+    private static final int MIN_PREFERENCE_EVENT_COUNT = 5;
+    private static final int MAX_PREFERENCE_EVENT_COUNT = 20;
 
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
@@ -93,9 +96,7 @@ public class PreferenceService {
 
     @Transactional
     public void createPreferences(UUID userId, List<UUID> eventIds) {
-        if (eventIds == null || eventIds.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
+        validatePreferenceEventIds(eventIds);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
@@ -110,6 +111,19 @@ public class PreferenceService {
                         userId, requestedEventIds, exception);
             }
         });
+    }
+
+    private void validatePreferenceEventIds(List<UUID> eventIds) {
+        if (eventIds == null
+                || eventIds.size() < MIN_PREFERENCE_EVENT_COUNT
+                || eventIds.size() > MAX_PREFERENCE_EVENT_COUNT
+                || eventIds.stream().anyMatch(Objects::isNull)
+                || eventIds.stream().distinct().count() != eventIds.size()) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_REQUEST,
+                    "Select between 5 and 20 distinct events."
+            );
+        }
     }
 
     private Map<UUID, Event> findLocalEvents(List<SeedEvent> seedEvents) {
@@ -137,8 +151,8 @@ public class PreferenceService {
 
     private void savePreferenceEvents(User user, List<UUID> eventIds) {
         userPreferenceEventRepository.deleteAllByUserId(user.getId());
+        userPreferenceEventRepository.flush();
         List<UserPreferenceEvent> preferenceEvents = eventIds.stream()
-                .distinct()
                 .map(eventId -> UserPreferenceEvent.builder()
                         .user(user)
                         .eventId(eventId)

@@ -29,7 +29,6 @@
 - [classification_keywords](#classification_keywords): 분류 키워드 마스터
 - [age_restriction_keywords](#age_restriction_keywords): 연령 제한 키워드
 - [user_categories](#user_categories): 사용자 선호 카테고리
-- [user_preference_keywords](#user_preference_keywords): 사용자 선호 키워드
 - [user_keyword_weights](#user_keyword_weights): 사용자 키워드 가중치
 - [event_keywords](#event_keywords): 이벤트 취향 키워드 매핑
 - [event_keyword_weights](#event_keyword_weights): 이벤트 키워드 가중치
@@ -146,7 +145,7 @@
 | Entity | `PreferenceKeyword` |
 | Primary Key | `id` BIGINT auto increment |
 | Unique | `value` |
-| Referenced By | `user_preference_keywords`, `event_keywords` |
+| Referenced By | `event_keywords` |
 
 | 컬럼 | Java 필드 | 타입 | 제약 | 설명 |
 | --- | --- | --- | --- | --- |
@@ -207,25 +206,6 @@
 | `id` | id | BIGINT | PK NOT NULL AUTO_INCREMENT | 매핑 식별자입니다. |
 | `user_id` | user | BINARY(16) | FK UK NOT NULL | `users.id`를 참조합니다. |
 | `category_id` | category | BIGINT | FK UK NOT NULL | `categories.id`를 참조합니다. |
-| `created_at` | createdAt | DATETIME(6) | NOT NULL | 생성 시각입니다. |
-| `updated_at` | updatedAt | DATETIME(6) | NULL | 수정 시각입니다. |
-
-## user_preference_keywords
-
-사용자와 취향 키워드를 연결합니다.
-
-| 항목 | 내용 |
-| --- | --- |
-| Entity | `UserPreferenceKeyword` |
-| Primary Key | `id` BIGINT auto increment |
-| Foreign Keys | `user_id`, `preference_keyword_id` |
-| Unique | `uk_user_preference_keyword`: user + preference keyword |
-
-| 컬럼 | Java 필드 | 타입 | 제약 | 설명 |
-| --- | --- | --- | --- | --- |
-| `id` | id | BIGINT | PK NOT NULL AUTO_INCREMENT | 매핑 식별자입니다. |
-| `user_id` | user | BINARY(16) | FK UK NOT NULL | `users.id`를 참조합니다. |
-| `preference_keyword_id` | preferenceKeyword | BIGINT | FK UK NOT NULL | `preference_keywords.id`를 참조합니다. |
 | `created_at` | createdAt | DATETIME(6) | NOT NULL | 생성 시각입니다. |
 | `updated_at` | updatedAt | DATETIME(6) | NULL | 수정 시각입니다. |
 
@@ -441,7 +421,6 @@
 - `events.category_id` → `categories.id`: 이벤트는 하나의 카테고리에 속합니다.
 - `user_categories.user_id` + `category_id`: 사용자별 선호 카테고리는 중복 저장되지 않습니다.
 - `keywords.type` + `value`: 같은 유형 안에서 키워드 값은 중복 저장되지 않습니다.
-- `user_preference_keywords.user_id` + `preference_keyword_id`: 사용자별 취향 키워드는 중복 저장되지 않습니다.
 - `user_keyword_weights.user_id` + `keyword_id`: 사용자별 키워드 가중치는 하나만 유지됩니다.
 - `event_keywords.event_id` + `preference_keyword_id`: 이벤트별 취향 키워드는 중복 저장되지 않습니다.
 - `event_keyword_weights.event_id` + `keyword_id`: 이벤트별 키워드 가중치는 하나만 유지됩니다.

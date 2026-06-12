@@ -108,7 +108,7 @@ public class PreferenceRecommendationService {
         Map<UUID, Event> localEvents = findLocalEvents(recommendedEvents);
 
         return recommendedEvents.stream()
-                .map(recommendedEvent -> toRecommendation(user, inputEventIds, recommendedEvent, localEvents))
+                .map(recommendedEvent -> toRecommendation(user, recommendedEvent, localEvents))
                 .filter(Objects::nonNull)
                 .toList();
     }
@@ -128,7 +128,7 @@ public class PreferenceRecommendationService {
                 ));
     }
 
-    private Recommendation toRecommendation(User user, List<UUID> inputEventIds, RecommendedEvent recommendedEvent,
+    private Recommendation toRecommendation(User user, RecommendedEvent recommendedEvent,
                                             Map<UUID, Event> localEvents) {
         Event event = localEvents.get(recommendedEvent.eventId());
         if (event == null) {
@@ -139,16 +139,15 @@ public class PreferenceRecommendationService {
                 .user(user)
                 .event(event)
                 .matchScore(toMatchScore(recommendedEvent.matchPct()))
-                .reason(toReason(recommendedEvent, inputEventIds))
+                .reason(toReason(recommendedEvent))
                 .build();
     }
 
-    private String toReason(RecommendedEvent recommendedEvent, List<UUID> inputEventIds) {
+    private String toReason(RecommendedEvent recommendedEvent) {
         String genre = recommendedEvent.genre();
-        String baseReason = genre == null || genre.isBlank()
+        return genre == null || genre.isBlank()
                 ? "Selected preference events matched this event."
                 : "Selected preference events matched the " + genre + " genre.";
-        return baseReason + " inputEventIds=" + inputEventIds;
     }
 
     private BigDecimal toMatchScore(Double value) {

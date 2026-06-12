@@ -11,5 +11,9 @@ out/
 .vscode/
 
 src/main/resources/application-local.yml
-src/test/*
+src/test/**
+!src/test/**/
+!src/test/java/com/arbit/app/auth/controller/AuthControllerTest.java
+!src/test/java/com/arbit/app/auth/service/AuthServiceTest.java
+!src/test/java/com/arbit/app/preference/controller/PreferenceControllerTest.java
 node_modules/*

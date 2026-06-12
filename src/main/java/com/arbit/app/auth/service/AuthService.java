@@ -17,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,8 @@ public class AuthService {
     private static final String GUEST_RESIDENTIAL_AREA = "NONSELECT";
     private static final double DEFAULT_RESIDENTIAL_LATITUDE = 0.0;
     private static final double DEFAULT_RESIDENTIAL_LONGITUDE = 0.0;
+    private static final String USERNAME_NOT_FOUND_MESSAGE = "No signup history exists for this username.";
+    private static final String INCORRECT_PASSWORD_MESSAGE = "Password is incorrect.";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -61,17 +64,24 @@ public class AuthService {
                 .residentialLatitude(coordinates.latitude())
                 .residentialLongitude(coordinates.longitude())
                 .build();
-        userRepository.save(user);
+        try {
+            userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException exception) {
+            throw new BusinessException(ErrorCode.DUPLICATE_RESOURCE);
+        }
         return issueTokens(user.getUsername());
     }
 
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
+        if (!userRepository.existsByUsername(request.username())) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, USERNAME_NOT_FOUND_MESSAGE);
+        }
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.username(), request.password()));
         } catch (AuthenticationException exception) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.UNAUTHORIZED, INCORRECT_PASSWORD_MESSAGE);
         }
         return issueTokens(request.username());
     }

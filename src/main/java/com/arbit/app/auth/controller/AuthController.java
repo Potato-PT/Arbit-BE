@@ -82,7 +82,7 @@ public class AuthController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "409",
-                            description = "이미 사용 중인 아이디입니다."
+                            description = "이미 사용 중인 아이디입니다. 데이터베이스 저장 중 중복이 감지된 경우도 포함합니다."
                     )
             }
     )
@@ -117,7 +117,10 @@ public class AuthController {
                     ),
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "401",
-                            description = "아이디 또는 비밀번호가 올바르지 않습니다."
+                            description = """
+                                    가입 이력이 없는 아이디이면 "No signup history exists for this username.",
+                                    가입된 아이디의 비밀번호가 틀리면 "Password is incorrect." 메시지를 반환합니다.
+                                    """
                     )
             }
     )

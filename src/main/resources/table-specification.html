@@ -323,7 +323,6 @@
         <a href="#classification_keywords">classification_keywords<span>분류 키워드 마스터</span></a>
         <a href="#age_restriction_keywords">age_restriction_keywords<span>연령 제한 키워드</span></a>
         <a href="#user_categories">user_categories<span>사용자 선호 카테고리</span></a>
-        <a href="#user_preference_keywords">user_preference_keywords<span>사용자 선호 키워드</span></a>
         <a href="#user_keyword_weights">user_keyword_weights<span>사용자 키워드 가중치</span></a>
         <a href="#event_keywords">event_keywords<span>이벤트 취향 키워드 매핑</span></a>
         <a href="#event_keyword_weights">event_keyword_weights<span>이벤트 키워드 가중치</span></a>
@@ -474,7 +473,7 @@
         <div class="meta"><strong>Entity</strong><span><code>PreferenceKeyword</code></span></div>
         <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
         <div class="meta"><strong>Unique</strong><span><code>value</code></span></div>
-        <div class="meta"><strong>Referenced By</strong><span><code>user_preference_keywords</code>, <code>event_keywords</code></span></div>
+        <div class="meta"><strong>Referenced By</strong><span><code>event_keywords</code></span></div>
       </div>
       <div class="content">
         <div class="table-scroll">
@@ -569,34 +568,6 @@
         </div>
       </div>
     </section>
-
-    <section id="user_preference_keywords">
-      <div class="section-head">
-        <h2>user_preference_keywords</h2>
-        <p class="summary">사용자와 취향 키워드를 연결합니다.</p>
-      </div>
-      <div class="meta-grid">
-        <div class="meta"><strong>Entity</strong><span><code>UserPreferenceKeyword</code></span></div>
-        <div class="meta"><strong>Primary Key</strong><span><code>id</code> BIGINT auto increment</span></div>
-        <div class="meta"><strong>Foreign Keys</strong><span><code>user_id</code>, <code>preference_keyword_id</code></span></div>
-        <div class="meta"><strong>Unique</strong><span><code>uk_user_preference_keyword</code>: user + preference keyword</span></div>
-      </div>
-      <div class="content">
-        <div class="table-scroll">
-          <table>
-            <thead><tr><th>컬럼</th><th>Java 필드</th><th>타입</th><th>제약</th><th>설명</th></tr></thead>
-            <tbody>
-              <tr><td><code>id</code></td><td>id</td><td>BIGINT</td><td><span class="badge pk">PK</span><span class="badge nn">NOT NULL</span><span class="badge">AUTO_INCREMENT</span></td><td>매핑 식별자입니다.</td></tr>
-              <tr><td><code>user_id</code></td><td>user</td><td>BINARY(16)</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>users.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>preference_keyword_id</code></td><td>preferenceKeyword</td><td>BIGINT</td><td><span class="badge fk">FK</span><span class="badge uk">UK</span><span class="badge nn">NOT NULL</span></td><td><code>preference_keywords.id</code>를 참조합니다.</td></tr>
-              <tr><td><code>created_at</code></td><td>createdAt</td><td>DATETIME(6)</td><td><span class="badge nn">NOT NULL</span></td><td>생성 시각입니다.</td></tr>
-              <tr><td><code>updated_at</code></td><td>updatedAt</td><td>DATETIME(6)</td><td>NULL</td><td>수정 시각입니다.</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
     <section id="user_keyword_weights">
       <div class="section-head">
         <h2>user_keyword_weights</h2>
@@ -892,7 +863,6 @@
           <div class="relation"><code>events.category_id</code> → <code>categories.id</code>: 이벤트는 하나의 카테고리에 속합니다.</div>
           <div class="relation"><code>user_categories.user_id</code> + <code>category_id</code>: 사용자별 선호 카테고리는 중복 저장되지 않습니다.</div>
           <div class="relation"><code>keywords.type</code> + <code>value</code>: 같은 유형 안에서 키워드 값은 중복 저장되지 않습니다.</div>
-          <div class="relation"><code>user_preference_keywords.user_id</code> + <code>preference_keyword_id</code>: 사용자별 취향 키워드는 중복 저장되지 않습니다.</div>
           <div class="relation"><code>user_keyword_weights.user_id</code> + <code>keyword_id</code>: 사용자별 키워드 가중치는 하나만 유지됩니다.</div>
           <div class="relation"><code>event_keywords.event_id</code> + <code>preference_keyword_id</code>: 이벤트별 취향 키워드는 중복 저장되지 않습니다.</div>
           <div class="relation"><code>event_keyword_weights.event_id</code> + <code>keyword_id</code>: 이벤트별 키워드 가중치는 하나만 유지됩니다.</div>

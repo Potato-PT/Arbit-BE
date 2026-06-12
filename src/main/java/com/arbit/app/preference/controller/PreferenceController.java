@@ -374,10 +374,10 @@ public class PreferenceController {
                                               "success": true,
                                               "data": [
                                                 "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb",
-                                                "f4efcbce-3fa3-4499-ae23-25503a9f5af7",
-                                                "dc923df1-f64d-4be2-90db-279e9f822da3",
-                                                "c8ce590a-491a-4d78-a2e5-f2a53e8a3ed4",
-                                                "794027ef-3be7-404c-890f-3fe3b9eef0cb"
+                                                "25b9139b-3ed2-4923-907f-59322a55bc98",
+                                                "29acf197-aab6-4b3d-957d-ccd6f420e098",
+                                                "d4e90ffe-f663-4ff4-90dd-60db60c8f60a",
+                                                "3c48c48e-97e6-41ab-ad4e-2c26a79c48a7"
                                               ],
                                               "error": null
                                             }
@@ -397,11 +397,11 @@ public class PreferenceController {
                                                     {
                                                       "success": true,
                                                       "data": [
-                                                        "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb",
-                                                        "f4efcbce-3fa3-4499-ae23-25503a9f5af7",
-                                                        "dc923df1-f64d-4be2-90db-279e9f822da3",
-                                                        "c8ce590a-491a-4d78-a2e5-f2a53e8a3ed4",
-                                                        "794027ef-3be7-404c-890f-3fe3b9eef0cb"
+                                                "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb",
+                                                "25b9139b-3ed2-4923-907f-59322a55bc98",
+                                                "29acf197-aab6-4b3d-957d-ccd6f420e098",
+                                                "d4e90ffe-f663-4ff4-90dd-60db60c8f60a",
+                                                "3c48c48e-97e6-41ab-ad4e-2c26a79c48a7"
                                                       ],
                                                       "error": null
                                                     }
@@ -434,7 +434,11 @@ public class PreferenceController {
 
     private record CreatePreferenceApiResponse(
             boolean success,
-            @ArraySchema(schema = @Schema(type = "string", format = "uuid", example = "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb"))
+            @ArraySchema(
+                    minItems = 5,
+                    maxItems = 20,
+                    schema = @Schema(type = "string", format = "uuid", example = "0ba670fc-6df8-4d5d-a2dc-a90ca44b59fb")
+            )
             List<UUID> data,
             Object error
     ) {

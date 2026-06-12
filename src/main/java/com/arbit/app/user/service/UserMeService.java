@@ -8,7 +8,6 @@ import com.arbit.app.common.exception.ErrorCode;
 import com.arbit.app.event.entity.Event;
 import com.arbit.app.event.repository.EventActionLogRepository;
 import com.arbit.app.event.repository.EventDetailViewLogRepository;
-import com.arbit.app.keyword.repository.UserPreferenceKeywordRepository;
 import com.arbit.app.recommendation.repository.RecommendationRepository;
 import com.arbit.app.review.entity.Review;
 import com.arbit.app.review.repository.ReviewRepository;
@@ -37,7 +36,6 @@ public class UserMeService {
     private final BookmarkRepository bookmarkRepository;
     private final UserCategoryRepository userCategoryRepository;
     private final ReviewRepository reviewRepository;
-    private final UserPreferenceKeywordRepository userPreferenceKeywordRepository;
     private final RecommendationRepository recommendationRepository;
     private final EventActionLogRepository eventActionLogRepository;
     private final EventDetailViewLogRepository eventDetailViewLogRepository;
@@ -47,7 +45,6 @@ public class UserMeService {
                          BookmarkRepository bookmarkRepository,
                          UserCategoryRepository userCategoryRepository,
                          ReviewRepository reviewRepository,
-                         UserPreferenceKeywordRepository userPreferenceKeywordRepository,
                          RecommendationRepository recommendationRepository,
                          EventActionLogRepository eventActionLogRepository,
                          EventDetailViewLogRepository eventDetailViewLogRepository,
@@ -56,7 +53,6 @@ public class UserMeService {
         this.bookmarkRepository = bookmarkRepository;
         this.userCategoryRepository = userCategoryRepository;
         this.reviewRepository = reviewRepository;
-        this.userPreferenceKeywordRepository = userPreferenceKeywordRepository;
         this.recommendationRepository = recommendationRepository;
         this.eventActionLogRepository = eventActionLogRepository;
         this.eventDetailViewLogRepository = eventDetailViewLogRepository;
@@ -66,14 +62,11 @@ public class UserMeService {
     @Transactional(readOnly = true)
     public MyProfileResponse getMyProfile(UUID userId) {
         User user = getUser(userId);
-        List<String> tasteKeywords = userPreferenceKeywordRepository.findAllByUserIdWithKeyword(userId).stream()
-                .map(userPreferenceKeyword -> userPreferenceKeyword.getPreferenceKeyword().getValue())
-                .toList();
         return new MyProfileResponse(
                 user.getProfileImageUrl(),
                 user.getNickname(),
                 user.getCreatedAt(),
-                tasteKeywords
+                List.of()
         );
     }
 
@@ -134,7 +127,6 @@ public class UserMeService {
         bookmarkRepository.deleteAllByUserId(userId);
         userCategoryRepository.deleteAllByUserId(userId);
         recommendationRepository.deleteAllByUserId(userId);
-        userPreferenceKeywordRepository.deleteAllByUserId(userId);
         eventActionLogRepository.deleteAllByUserId(userId);
         eventDetailViewLogRepository.deleteAllByUserId(userId);
         reviewRepository.deleteAllByUserId(userId);
