@@ -3,6 +3,7 @@ package com.arbit.app.event.controller;
 import com.arbit.app.auth.security.CustomUserDetails;
 import com.arbit.app.common.response.ApiResponse;
 import com.arbit.app.event.dto.EventDetailResponse;
+import com.arbit.app.event.dto.MatchedEventResponse;
 import com.arbit.app.event.dto.EventResponse;
 import com.arbit.app.event.dto.EventSearchResultsResponse;
 import com.arbit.app.event.dto.EventSearchSort;
@@ -19,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 import java.util.List;
@@ -113,15 +115,24 @@ public class EventController {
                     @Parameter(
                             name = "sort",
                             in = ParameterIn.QUERY,
-                            description = "Sort option. Defaults to deadline.",
-                            schema = @Schema(type = "string", allowableValues = {"match", "deadline", "latest", "rating"}, defaultValue = "deadline")
+                            description = """
+                                    Sort option. Defaults to deadline when omitted. Only a single lowercase value is
+                                    accepted. Empty, repeated, uppercase, or unsupported values return 400.
+                                    """,
+                            schema = @Schema(type = "string", allowableValues = {"deadline", "latest", "rating"}, defaultValue = "deadline")
                     )
             },
-            responses = @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "Event list retrieved successfully",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventsApiResponse.class))
-            )
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Event list retrieved successfully",
+                            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EventsApiResponse.class))
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "400",
+                            description = "sort is empty, repeated, uppercase, or unsupported"
+                    )
+            }
     )
     public ApiResponse<List<EventResponse>> getEvents(
             @RequestParam(required = false) String category,
@@ -133,6 +144,63 @@ public class EventController {
         log.info("Event list request received. category={}, district={}, startDate={}, endDate={}, sort={}, status={}",
                 category, district, startDate, endDate, sort, status);
         return ApiResponse.success(eventService.getEvents(category, district, startDate, endDate, sort, status));
+    }
+
+    @GetMapping("/matches")
+    @SecurityRequirement(name = "bearerAuth")
+    @Operation(
+            summary = "Get matched event list",
+            description = """
+                    Returns the authenticated user's stored personalized recommendations ordered by match score
+                    descending. Supports the same category, district, date, and status filters as GET /api/events.
+                    """,
+            parameters = {
+                    @Parameter(name = "category", in = ParameterIn.QUERY, description = "Single category filter."),
+                    @Parameter(
+                            name = "district",
+                            in = ParameterIn.QUERY,
+                            description = "District filters. Multiple values allowed by repeating the query parameter.",
+                            array = @ArraySchema(schema = @Schema(type = "string"))
+                    ),
+                    @Parameter(
+                            name = "startDate",
+                            in = ParameterIn.QUERY,
+                            description = "Include only events whose startDate is on or after this date.",
+                            schema = @Schema(type = "string", format = "date"),
+                            example = "2026-06-01"
+                    ),
+                    @Parameter(
+                            name = "endDate",
+                            in = ParameterIn.QUERY,
+                            description = "Include only events whose endDate is on or before this date.",
+                            schema = @Schema(type = "string", format = "date"),
+                            example = "2026-06-30"
+                    )
+            },
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Matched event list retrieved successfully",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = MatchedEventsApiResponse.class)
+                            )
+                    ),
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "401",
+                            description = "Authentication is required"
+                    )
+            }
+    )
+    public ApiResponse<List<MatchedEventResponse>> getMatchedEvents(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) List<String> district,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @Parameter(hidden = true) @RequestParam(defaultValue = "ONGOING") EventStatus status,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ApiResponse.success(eventService.getMatchedEvents(
+                category, district, startDate, endDate, status, userDetails));
     }
 
     @Hidden
@@ -321,6 +389,15 @@ public class EventController {
             boolean success,
             @ArraySchema(schema = @Schema(implementation = EventResponse.class))
             List<EventResponse> data,
+            Object error
+    ) {
+    }
+
+    @Schema(description = "Wrapped matched event list response")
+    private record MatchedEventsApiResponse(
+            boolean success,
+            @ArraySchema(schema = @Schema(implementation = MatchedEventResponse.class))
+            List<MatchedEventResponse> data,
             Object error
     ) {
     }

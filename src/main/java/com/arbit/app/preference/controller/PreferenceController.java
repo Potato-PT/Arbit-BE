@@ -362,7 +362,7 @@ public class PreferenceController {
     @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "취향 입력",
-            description = "Stores selected seed event IDs for the authenticated user and starts personalized recommendation creation asynchronously.",
+            description = "Stores selected seed event IDs and creates personalized recommendations before returning a response.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
                     content = @Content(
@@ -388,7 +388,7 @@ public class PreferenceController {
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
-                            description = "Preference request accepted. Personalized recommendations will be created and stored asynchronously",
+                            description = "Preferences and personalized recommendations created successfully",
                             content = @Content(
                                     mediaType = "application/json",
                                     schema = @Schema(implementation = CreatePreferenceApiResponse.class),

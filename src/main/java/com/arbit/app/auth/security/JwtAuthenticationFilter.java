@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private static final String AUTHORIZATION = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final Set<String> EXCLUDED_PATHS = Set.of(
@@ -25,8 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/login",
             "/api/auth/guest-login",
             "/api/home",
-            "/api/preferences/categories",
-            "/api/events"
+            "/api/preferences/categories"
     );
     private static final Set<String> EXCLUDED_PATH_PREFIXES = Set.of(
             "/api/events/search"
@@ -61,7 +63,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
-            } catch (RuntimeException ignored) {
+            } catch (RuntimeException exception) {
+                log.warn("JWT authentication failed. method={}, uri={}, exception={}",
+                        request.getMethod(), request.getRequestURI(), exception.getClass().getSimpleName());
                 SecurityContextHolder.clearContext();
             }
         }
