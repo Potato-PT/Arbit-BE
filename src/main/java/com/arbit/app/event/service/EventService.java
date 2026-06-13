@@ -13,7 +13,9 @@ import com.arbit.app.event.repository.EventKeywordRepository;
 import com.arbit.app.event.repository.EventRepository;
 import com.arbit.app.recommendation.repository.RecommendationRepository;
 import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,19 +51,23 @@ public class EventService {
     }
 
     public List<EventResponse> getEvents(String category, List<String> districts, LocalDate startDate,
-                                         LocalDate endDate, String sort, EventStatus status) {
+                                         LocalDate endDate, String sort, List<EventStatus> statuses,
+                                         List<Boolean> isFreeValues) {
         String normalizedSort = EventListSortPolicy.normalize(sort);
         List<String> normalizedDistricts = normalize(districts);
-        return eventRepository.findByStatusOrderByEndDateAsc(
-                        status == EventStatus.ONGOING,
-                        status == EventStatus.UPCOMING,
-                        status == EventStatus.CLOSED,
+        Set<EventStatus> normalizedStatuses = normalizeStatuses(statuses);
+        Boolean isFree = normalizeIsFree(isFreeValues);
+        return eventRepository.findByFiltersOrderByEndDateAsc(
+                        !normalizedStatuses.isEmpty(),
+                        normalizedStatuses.contains(EventStatus.ONGOING),
+                        normalizedStatuses.contains(EventStatus.UPCOMING),
                         EventStatus.today(),
                         normalize(category),
                         normalizedDistricts != null,
                         normalizedDistricts == null ? List.of("__NO_DISTRICT__") : normalizedDistricts,
                         startDate,
                         endDate,
+                        isFree,
                         normalizedSort).stream()
                 .map(EventResponse::from)
                 .toList();
@@ -114,6 +120,24 @@ public class EventService {
         List<String> normalized = values.stream()
                 .toList();
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private Set<EventStatus> normalizeStatuses(List<EventStatus> statuses) {
+        if (statuses == null || statuses.isEmpty()) {
+            return EnumSet.noneOf(EventStatus.class);
+        }
+        if (statuses.contains(EventStatus.CLOSED)) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST, "status supports only ONGOING and UPCOMING.");
+        }
+        return EnumSet.copyOf(statuses);
+    }
+
+    private Boolean normalizeIsFree(List<Boolean> isFreeValues) {
+        if (isFreeValues == null || isFreeValues.isEmpty()) {
+            return null;
+        }
+        List<Boolean> distinctValues = isFreeValues.stream().distinct().toList();
+        return distinctValues.size() == 1 ? distinctValues.get(0) : null;
     }
 
     private void saveDetailViewLog(CustomUserDetails userDetails, Event event) {

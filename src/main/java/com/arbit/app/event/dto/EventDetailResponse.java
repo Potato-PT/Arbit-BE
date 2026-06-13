@@ -59,7 +59,7 @@ public record EventDetailResponse(
                 event.getStartDate(),
                 event.getEndDate(),
                 event.getPrice(),
-                null,
+                event.getTime(),
                 event.isFree(),
                 keywords,
                 EventStatus.from(event.getStartDate(), event.getEndDate(), EventStatus.today()),

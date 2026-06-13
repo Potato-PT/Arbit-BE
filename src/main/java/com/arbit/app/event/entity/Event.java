@@ -76,6 +76,9 @@ public class Event extends BaseTimeEntity {
     @Column(length = 255)
     private String price;
 
+    @Column(length = 255)
+    private String time;
+
     @Column(length = 1000)
     private String bookingUrl;
 
@@ -83,7 +86,7 @@ public class Event extends BaseTimeEntity {
     private Event(Category category, String title, String description, String posterImageUrl, String venue,
                   String venueAddress, String district, Double latitude, Double longitude,
                   LocalDate startDate, LocalDate endDate, boolean free, EventStatus status,
-                  String price, String bookingUrl) {
+                  String price, String time, String bookingUrl) {
         this.id = UUID.randomUUID();
         this.category = category;
         this.title = title;
@@ -100,6 +103,7 @@ public class Event extends BaseTimeEntity {
         this.status = status;
         this.averageRating = BigDecimal.ZERO;
         this.price = price;
+        this.time = time;
         this.bookingUrl = bookingUrl;
     }
 

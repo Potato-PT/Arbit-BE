@@ -113,6 +113,24 @@ public class EventController {
                             example = "2026-06-30"
                     ),
                     @Parameter(
+                            name = "status",
+                            in = ParameterIn.QUERY,
+                            description = """
+                                    Event status filters. Multiple values are allowed by repeating the query parameter.
+                                    When omitted, events of every status are returned.
+                                    """,
+                            array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"ONGOING", "UPCOMING"}))
+                    ),
+                    @Parameter(
+                            name = "is_free",
+                            in = ParameterIn.QUERY,
+                            description = """
+                                    Free/paid filters. Multiple values are allowed by repeating the query parameter.
+                                    When omitted or both true and false are selected, all events are returned.
+                                    """,
+                            array = @ArraySchema(schema = @Schema(type = "boolean"))
+                    ),
+                    @Parameter(
                             name = "sort",
                             in = ParameterIn.QUERY,
                             description = """
@@ -140,10 +158,11 @@ public class EventController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "deadline") String sort,
-            @Parameter(hidden = true) @RequestParam(defaultValue = "ONGOING") EventStatus status) {
-        log.info("Event list request received. category={}, district={}, startDate={}, endDate={}, sort={}, status={}",
-                category, district, startDate, endDate, sort, status);
-        return ApiResponse.success(eventService.getEvents(category, district, startDate, endDate, sort, status));
+            @Parameter(hidden = true) @RequestParam(required = false) List<EventStatus> status,
+            @Parameter(hidden = true) @RequestParam(name = "is_free", required = false) List<Boolean> isFree) {
+        log.info("Event list request received. category={}, district={}, startDate={}, endDate={}, sort={}, status={}, isFree={}",
+                category, district, startDate, endDate, sort, status, isFree);
+        return ApiResponse.success(eventService.getEvents(category, district, startDate, endDate, sort, status, isFree));
     }
 
     @GetMapping("/matches")

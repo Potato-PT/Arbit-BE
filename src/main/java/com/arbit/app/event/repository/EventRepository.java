@@ -20,33 +20,33 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     @Query("""
             select e
             from Event e
-            where (
-                (:ongoing = true
+            where (:filterByStatus = false
+                or (:ongoing = true
                     and e.startDate <= :today and e.endDate >= :today)
                 or (:upcoming = true
                     and e.startDate > :today)
-                or (:closed = true
-                    and e.endDate < :today)
               )
               and (:category is null or e.category.name = :category)
               and (:filterByDistrict = false or e.district in :districts)
               and (:startDate is null or e.startDate >= :startDate)
               and (:endDate is null or e.endDate <= :endDate)
+              and (:isFree is null or e.free = :isFree)
             order by
               case when :sort = 'rating' then e.averageRating end desc,
               case when :sort = 'latest' then e.startDate end desc,
               e.endDate asc
             """)
-    List<Event> findByStatusOrderByEndDateAsc(
+    List<Event> findByFiltersOrderByEndDateAsc(
+            @Param("filterByStatus") boolean filterByStatus,
             @Param("ongoing") boolean ongoing,
             @Param("upcoming") boolean upcoming,
-            @Param("closed") boolean closed,
             @Param("today") LocalDate today,
             @Param("category") String category,
             @Param("filterByDistrict") boolean filterByDistrict,
             @Param("districts") List<String> districts,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
+            @Param("isFree") Boolean isFree,
             @Param("sort") String sort);
 
     @EntityGraph(attributePaths = "category")
