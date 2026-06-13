@@ -17,14 +17,18 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class PreferenceService {
 
+    private static final Logger log = LoggerFactory.getLogger(PreferenceService.class);
     private static final int SEED_EVENT_SAMPLE_SIZE = 20;
     private static final int RANDOM_STATE_BOUND = 1_000_000;
     private static final int MIN_PREFERENCE_EVENT_COUNT = 5;
@@ -52,10 +56,17 @@ public class PreferenceService {
     }
 
     @Transactional(readOnly = true)
-    public List<PreferenceCategoriesResponse> getPreferenceCategories() {
+    public List<PreferenceCategoriesResponse> getPreferenceCategories(String requestId) {
+        long startedAt = System.nanoTime();
         int rand = ThreadLocalRandom.current().nextInt(RANDOM_STATE_BOUND);
+        log.info("preference.seed.prepare requestId={} sampleSize={} randomState={}",
+                requestId, SEED_EVENT_SAMPLE_SIZE, rand);
 
         try {
+            long aiStartedAt = System.nanoTime();
+            log.info("preference.seed.ai.request.start requestId={} method=GET path=/seed-events sampleSize={} randomState={}",
+                    requestId, SEED_EVENT_SAMPLE_SIZE, rand);
+
             SeedEventsResponse response = arbitAiRestClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/seed-events")
@@ -65,24 +76,67 @@ public class PreferenceService {
                     .retrieve()
                     .body(SeedEventsResponse.class);
 
+            log.info("preference.seed.ai.request.end requestId={} responsePresent={} declaredSampleSize={} eventCount={} elapsedMs={}",
+                    requestId,
+                    response != null,
+                    response == null ? null : response.sampleSize(),
+                    response == null || response.events() == null ? null : response.events().size(),
+                    elapsedMillis(aiStartedAt));
+
             if (response == null || response.events() == null || response.events().size() != SEED_EVENT_SAMPLE_SIZE) {
+                log.error("preference.seed.ai.response.invalid requestId={} expectedEventCount={} actualEventCount={}",
+                        requestId,
+                        SEED_EVENT_SAMPLE_SIZE,
+                        response == null || response.events() == null ? null : response.events().size());
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
             }
 
+            List<UUID> eventIds = response.events().stream()
+                    .map(SeedEvent::eventId)
+                    .toList();
+            log.info("preference.seed.db.lookup.start requestId={} eventCount={} eventIds={}",
+                    requestId, eventIds.size(), eventIds);
+
+            long dbStartedAt = System.nanoTime();
             Map<UUID, Event> localEvents = findLocalEvents(response.events());
             long distinctSeedEventCount = response.events().stream()
                     .map(SeedEvent::eventId)
                     .distinct()
                     .count();
+            log.info("preference.seed.db.lookup.end requestId={} distinctAiEventCount={} matchedLocalEventCount={} elapsedMs={}",
+                    requestId, distinctSeedEventCount, localEvents.size(), elapsedMillis(dbStartedAt));
+
             if (localEvents.size() != distinctSeedEventCount) {
+                List<UUID> missingEventIds = eventIds.stream()
+                        .distinct()
+                        .filter(eventId -> !localEvents.containsKey(eventId))
+                        .toList();
+                log.error("preference.seed.db.mismatch requestId={} missingEventIds={}", requestId, missingEventIds);
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Seed events did not match local events.");
             }
 
-            return response.events().stream()
+            List<PreferenceCategoriesResponse> result = response.events().stream()
                     .map(this::toPreferenceCategoriesResponse)
                     .toList();
-        } catch (RestClientException | IllegalArgumentException exception) {
+            log.info("preference.seed.complete requestId={} responseEventCount={} elapsedMs={}",
+                    requestId, result.size(), elapsedMillis(startedAt));
+            return result;
+        } catch (RestClientResponseException exception) {
+            log.error("preference.seed.ai.request.failed requestId={} statusCode={} responseBody={} elapsedMs={}",
+                    requestId,
+                    exception.getStatusCode(),
+                    exception.getResponseBodyAsString(),
+                    elapsedMillis(startedAt),
+                    exception);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
+        } catch (RestClientException | IllegalArgumentException exception) {
+            log.error("preference.seed.failed requestId={} elapsedMs={}",
+                    requestId, elapsedMillis(startedAt), exception);
+            throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
+        } catch (RuntimeException exception) {
+            log.error("preference.seed.failed requestId={} elapsedMs={}",
+                    requestId, elapsedMillis(startedAt), exception);
+            throw exception;
         }
     }
 
@@ -132,6 +186,10 @@ public class PreferenceService {
                 seedEvent.genre(),
                 seedEvent.imageUrl()
         );
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000;
     }
 
     private void savePreferenceEvents(User user, List<UUID> eventIds) {
