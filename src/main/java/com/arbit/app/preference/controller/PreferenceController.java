@@ -11,8 +11,11 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "취향 입력", description = "APIs for choosing categories and taste keywords.")
 public class PreferenceController {
 
+    private static final Logger log = LoggerFactory.getLogger(PreferenceController.class);
+
     private final PreferenceService preferenceService;
 
     public PreferenceController(PreferenceService preferenceService) {
@@ -32,7 +37,7 @@ public class PreferenceController {
     @GetMapping("/api/preferences/categories")
     @Operation(
             summary = "Get seed events for choosing preferences",
-            description = "Generates a random state, calls POST /seed-events, and returns 20 events. The seed-event service provides event_id, image_url, genre, and title; image_url is exposed as posterImage.",
+            description = "Generates a random state, calls GET /seed-events, and returns 20 events. The seed-event service provides event_id, image_url, genre, and title; image_url is exposed as posterImage.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",
@@ -354,8 +359,30 @@ public class PreferenceController {
                     )
             }
     )
-    public ApiResponse<List<PreferenceCategoriesResponse>> getPreferenceCategories() {
-        return ApiResponse.success(preferenceService.getPreferenceCategories());
+    public ApiResponse<List<PreferenceCategoriesResponse>> getPreferenceCategories(HttpServletRequest request) {
+        String requestId = UUID.randomUUID().toString();
+        long startedAt = System.nanoTime();
+        log.info("preference.categories.request.start requestId={} method={} uri={} query={}",
+                requestId, request.getMethod(), request.getRequestURI(), request.getQueryString());
+
+        try {
+            List<PreferenceCategoriesResponse> categories = preferenceService.getPreferenceCategories(requestId);
+            ApiResponse<List<PreferenceCategoriesResponse>> response = ApiResponse.success(categories);
+            log.info("preference.categories.response.ready requestId={} success={} eventCount={} elapsedMs={}",
+                    requestId, response.success(), categories.size(), elapsedMillis(startedAt));
+            return response;
+        } catch (RuntimeException exception) {
+            log.error("preference.categories.request.error requestId={} method={} uri={} elapsedMs={}",
+                    requestId, request.getMethod(), request.getRequestURI(), elapsedMillis(startedAt), exception);
+            throw exception;
+        } finally {
+            log.info("preference.categories.request.end requestId={} method={} uri={} elapsedMs={}",
+                    requestId, request.getMethod(), request.getRequestURI(), elapsedMillis(startedAt));
+        }
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000;
     }
 
     @PostMapping("/api/preferences")
