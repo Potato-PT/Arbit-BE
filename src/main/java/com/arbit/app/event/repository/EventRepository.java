@@ -20,7 +20,8 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     @Query("""
             select e
             from Event e
-            where (:filterByStatus = false
+            where e.endDate >= :today
+              and (:filterByStatus = false
                 or (:ongoing = true
                     and e.startDate <= :today and e.endDate >= :today)
                 or (:upcoming = true
