@@ -119,7 +119,7 @@ public class EventController {
                             in = ParameterIn.QUERY,
                             description = """
                                     Event status filters. Multiple values are allowed by repeating the query parameter.
-                                    When omitted, events of every status are returned.
+                                    Closed events are always excluded. When omitted, ongoing and upcoming events are returned.
                                     """,
                             array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"ONGOING", "UPCOMING"}))
                     ),
