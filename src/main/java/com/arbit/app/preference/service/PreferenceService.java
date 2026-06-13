@@ -56,7 +56,7 @@ public class PreferenceService {
         int rand = ThreadLocalRandom.current().nextInt(RANDOM_STATE_BOUND);
 
         try {
-            SeedEventsResponse response = arbitAiRestClient.get()
+            SeedEventsResponse response = arbitAiRestClient.post()
                     .uri(uriBuilder -> uriBuilder
                             .path("/seed-events")
                             .queryParam("sample_size", SEED_EVENT_SAMPLE_SIZE)
@@ -79,7 +79,7 @@ public class PreferenceService {
             }
 
             return response.events().stream()
-                    .map(event -> toPreferenceCategoriesResponse(event, localEvents.get(event.eventId())))
+                    .map(this::toPreferenceCategoriesResponse)
                     .toList();
         } catch (RestClientException | IllegalArgumentException exception) {
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
@@ -125,12 +125,12 @@ public class PreferenceService {
                 ));
     }
 
-    private PreferenceCategoriesResponse toPreferenceCategoriesResponse(SeedEvent seedEvent, Event localEvent) {
+    private PreferenceCategoriesResponse toPreferenceCategoriesResponse(SeedEvent seedEvent) {
         return new PreferenceCategoriesResponse(
                 seedEvent.eventId(),
                 seedEvent.title(),
                 seedEvent.genre(),
-                localEvent.getPosterImageUrl()
+                seedEvent.imageUrl()
         );
     }
 
@@ -155,6 +155,7 @@ public class PreferenceService {
 
     private record SeedEvent(
             @JsonProperty("event_id") UUID eventId,
+            @JsonProperty("image_url") String imageUrl,
             String title,
             String genre
     ) {
