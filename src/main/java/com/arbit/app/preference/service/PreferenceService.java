@@ -56,7 +56,7 @@ public class PreferenceService {
         int rand = ThreadLocalRandom.current().nextInt(RANDOM_STATE_BOUND);
 
         try {
-            SeedEventsResponse response = arbitAiRestClient.post()
+            SeedEventsResponse response = arbitAiRestClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/seed-events")
                             .queryParam("sample_size", SEED_EVENT_SAMPLE_SIZE)
