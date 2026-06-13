@@ -78,4 +78,14 @@ public class User extends BaseTimeEntity {
     public void updateProfileImageUrl(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
     }
+
+    public void initializeResidentialLocationIfMissing(String residentialArea, double latitude, double longitude) {
+        if (this.residentialArea != null && !this.residentialArea.isBlank()
+                && this.residentialLatitude != null && this.residentialLongitude != null) {
+            return;
+        }
+        this.residentialArea = residentialArea;
+        this.residentialLatitude = latitude;
+        this.residentialLongitude = longitude;
+    }
 }

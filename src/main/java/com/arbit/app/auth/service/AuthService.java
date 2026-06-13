@@ -29,6 +29,9 @@ public class AuthService {
     private static final String GUEST_RESIDENTIAL_AREA = "NONSELECT";
     private static final double DEFAULT_RESIDENTIAL_LATITUDE = 0.0;
     private static final double DEFAULT_RESIDENTIAL_LONGITUDE = 0.0;
+    private static final String SUNGSHIN_RESIDENTIAL_AREA = "서울특별시 성북구 보문로34다길 2";
+    private static final double SUNGSHIN_RESIDENTIAL_LATITUDE = 37.5913;
+    private static final double SUNGSHIN_RESIDENTIAL_LONGITUDE = 127.0221;
     private static final String USERNAME_NOT_FOUND_MESSAGE = "No signup history exists for this username.";
     private static final String INCORRECT_PASSWORD_MESSAGE = "Password is incorrect.";
 
@@ -72,17 +75,21 @@ public class AuthService {
         return issueTokens(user.getUsername());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthResponse login(LoginRequest request) {
-        if (!userRepository.existsByUsername(request.username())) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED, USERNAME_NOT_FOUND_MESSAGE);
-        }
+        User user = userRepository.findByUsername(request.username())
+                .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED, USERNAME_NOT_FOUND_MESSAGE));
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.username(), request.password()));
         } catch (AuthenticationException exception) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED, INCORRECT_PASSWORD_MESSAGE);
         }
+        user.initializeResidentialLocationIfMissing(
+                SUNGSHIN_RESIDENTIAL_AREA,
+                SUNGSHIN_RESIDENTIAL_LATITUDE,
+                SUNGSHIN_RESIDENTIAL_LONGITUDE
+        );
         return issueTokens(request.username());
     }
 
