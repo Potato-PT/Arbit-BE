@@ -26,9 +26,9 @@ public class AuthService {
 
     private static final String GUEST_USERNAME_PREFIX = "guest_";
     private static final String GUEST_NICKNAME_PREFIX = "Guest";
-    private static final String GUEST_RESIDENTIAL_AREA = "NONSELECT";
-    private static final double DEFAULT_RESIDENTIAL_LATITUDE = 0.0;
-    private static final double DEFAULT_RESIDENTIAL_LONGITUDE = 0.0;
+    private static final String GUEST_RESIDENTIAL_AREA = "서울 성북구 북악산로 918";
+    private static final double GUEST_RESIDENTIAL_LATITUDE = 37.5946226781717;
+    private static final double GUEST_RESIDENTIAL_LONGITUDE = 127.023128563512;
     private static final String SUNGSHIN_RESIDENTIAL_AREA = "서울특별시 성북구 보문로34다길 2";
     private static final double SUNGSHIN_RESIDENTIAL_LATITUDE = 37.5913;
     private static final double SUNGSHIN_RESIDENTIAL_LONGITUDE = 127.0221;
@@ -104,8 +104,8 @@ public class AuthService {
                 .age(0)
                 .gender(UserGender.NONSELECT)
                 .residentialArea(GUEST_RESIDENTIAL_AREA)
-                .residentialLatitude(DEFAULT_RESIDENTIAL_LATITUDE)
-                .residentialLongitude(DEFAULT_RESIDENTIAL_LONGITUDE)
+                .residentialLatitude(GUEST_RESIDENTIAL_LATITUDE)
+                .residentialLongitude(GUEST_RESIDENTIAL_LONGITUDE)
                 .build();
         userRepository.save(user);
         return issueTokens(user.getUsername());

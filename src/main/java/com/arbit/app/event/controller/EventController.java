@@ -51,11 +51,13 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Get event detail",
             description = """
                     Returns the full detail of a single event by its ID.
                     Use this endpoint after the user selects an item from search suggestions or results.
+                    When a valid Bearer token is provided, the server records a DETAIL_VIEW action in event_action_logs.
                     """,
             parameters = @Parameter(
                     name = "eventId",
