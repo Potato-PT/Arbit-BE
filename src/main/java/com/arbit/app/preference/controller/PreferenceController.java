@@ -32,7 +32,7 @@ public class PreferenceController {
     @GetMapping("/api/preferences/categories")
     @Operation(
             summary = "Get seed events for choosing preferences",
-            description = "Generates a random state, calls the seed-event service, and returns 20 events with event_id, title, genre, and posterImage.",
+            description = "Generates a random state, calls POST /seed-events, and returns 20 events. The seed-event service provides event_id, image_url, genre, and title; image_url is exposed as posterImage.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",

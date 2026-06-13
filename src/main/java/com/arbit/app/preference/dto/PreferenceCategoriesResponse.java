@@ -16,7 +16,7 @@ public record PreferenceCategoriesResponse(
         @Schema(description = "Event genre", example = "exhibition")
         String genre,
 
-        @Schema(description = "Event poster image URL from the events table", example = "https://culture.seoul.go.kr/cmmn/file/getImage.do?atchFileId=3f3433c726c34bfbbca16ea200f7cb86&thumb=Y")
+        @Schema(description = "Event image URL returned as image_url by the seed-event service", example = "https://culture.seoul.go.kr/cmmn/file/getImage.do?atchFileId=3f3433c726c34bfbbca16ea200f7cb86&thumb=Y")
         String posterImage
 ) {
 }
