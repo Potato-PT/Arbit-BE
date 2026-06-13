@@ -38,7 +38,11 @@ public class RecommendationController {
     @GetMapping
     @Operation(
             summary = "Get home recommendations",
-            description = "Returns the authenticated user's stored personalized recommendations for the home screen.",
+            description = """
+                    Returns the authenticated user's stored personalized recommendations for the home screen.
+                    Event details are loaded from the local event database, and matchScore is the AI recommendation
+                    response's preference_match value.
+                    """,
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",

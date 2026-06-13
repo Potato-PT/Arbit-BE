@@ -131,7 +131,9 @@ public class AuthController {
     @PostMapping("/guest-login")
     @Operation(
             summary = "Create a guest user and issue tokens.",
-            description = "Creates a guest user with a server-generated random username and password, then returns JWT tokens. No request body is required.",
+            description = "Creates a guest user with a server-generated random username and password. "
+                    + "The guest user's residential area defaults to 서울 성북구 북악산로 918. "
+                    + "No request body is required.",
             responses = {
                     @io.swagger.v3.oas.annotations.responses.ApiResponse(
                             responseCode = "200",

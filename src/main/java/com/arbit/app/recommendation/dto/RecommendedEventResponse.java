@@ -47,7 +47,7 @@ public record RecommendedEventResponse(
         @Schema(description = "Event status", example = "ONGOING")
         EventStatus status,
 
-        @Schema(description = "Recommendation match score for this event", example = "97.50")
+        @Schema(description = "AI recommendation preference_match score for this event", example = "97.50")
         BigDecimal matchScore,
 
         @Schema(description = "Whether the authenticated user bookmarked this event", example = "true")
