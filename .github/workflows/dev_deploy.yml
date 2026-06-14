@@ -48,6 +48,7 @@ jobs:
           APP_DB_PASSWORD: ${{ secrets.APP_DB_PASSWORD }}
           MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           ARBIT_AI_ENV: ${{ secrets.ARBIT_AI_ENV }}
+          GCS_BUCKET_NAME: ${{ vars.GCS_BUCKET_NAME }}
           KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
           KAKAO_LOCAL_BASE_URL: https://dapi.kakao.com
           JWT_ACCESS_TOKEN_VALIDITY_MS: 3600000
@@ -56,6 +57,7 @@ jobs:
           test -n "${APP_DB_PASSWORD}" || { echo 'APP_DB_PASSWORD secret is required'; exit 1; }
           test -n "${MYSQL_ROOT_PASSWORD}" || { echo 'MYSQL_ROOT_PASSWORD secret is required'; exit 1; }
           test -n "${ARBIT_AI_ENV}" || { echo 'ARBIT_AI_ENV secret is required'; exit 1; }
+          test -n "${GCS_BUCKET_NAME}" || { echo 'GCS_BUCKET_NAME repository variable is required'; exit 1; }
           mkdir -p deploy/build/libs deploy/nginx
           cp Dockerfile deploy/Dockerfile
           cp docker-compose.yml deploy/docker-compose.yml
@@ -64,7 +66,8 @@ jobs:
           cp build/libs/*.jar deploy/build/libs/
           printf '%s\n' "${ARBIT_AI_ENV}" > deploy/arbit-ai.env
           {
-            echo "SPRING_PROFILES_ACTIVE=default"
+            echo "SPRING_PROFILES_ACTIVE=gcp"
+            echo "GCS_BUCKET_NAME=${GCS_BUCKET_NAME}"
             echo "MYSQL_DATABASE=${MYSQL_DATABASE}"
             echo "MYSQL_USER=${MYSQL_USER}"
             echo "MYSQL_PASSWORD=${APP_DB_PASSWORD}"

@@ -39,6 +39,7 @@ public class PreferenceService {
     private final UserPreferenceEventRepository userPreferenceEventRepository;
     private final PreferenceRecommendationService recommendationService;
     private final RestClient arbitAiRestClient;
+    private final String arbitAiBaseUrl;
 
     public PreferenceService(UserRepository userRepository,
                              EventRepository eventRepository,
@@ -50,8 +51,9 @@ public class PreferenceService {
         this.eventRepository = eventRepository;
         this.userPreferenceEventRepository = userPreferenceEventRepository;
         this.recommendationService = recommendationService;
+        this.arbitAiBaseUrl = arbitAiProperties.baseUrl();
         this.arbitAiRestClient = restClientBuilder
-                .baseUrl(arbitAiProperties.baseUrl())
+                .baseUrl(arbitAiBaseUrl)
                 .build();
     }
 
@@ -59,8 +61,8 @@ public class PreferenceService {
     public List<PreferenceCategoriesResponse> getPreferenceCategories(String requestId) {
         long startedAt = System.nanoTime();
         int rand = ThreadLocalRandom.current().nextInt(RANDOM_STATE_BOUND);
-        log.info("preference.seed.prepare requestId={} sampleSize={} randomState={}",
-                requestId, SEED_EVENT_SAMPLE_SIZE, rand);
+        log.info("preference.seed.prepare requestId={} aiBaseUrl={} sampleSize={} randomState={}",
+                requestId, arbitAiBaseUrl, SEED_EVENT_SAMPLE_SIZE, rand);
 
         try {
             long aiStartedAt = System.nanoTime();
@@ -91,18 +93,17 @@ public class PreferenceService {
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
             }
 
-            List<UUID> eventIds = response.events().stream()
-                    .map(SeedEvent::eventId)
-                    .toList();
+            List<UUID> eventIds = toEventIds(response.events(), requestId);
+            log.info("preference.seed.ai.response.event-ids requestId={} eventIds={}",
+                    requestId, eventIds);
             log.info("preference.seed.db.lookup.start requestId={} eventCount={} eventIds={}",
                     requestId, eventIds.size(), eventIds);
 
             long dbStartedAt = System.nanoTime();
-            Map<UUID, Event> localEvents = findLocalEvents(response.events());
-            long distinctSeedEventCount = response.events().stream()
-                    .map(SeedEvent::eventId)
-                    .distinct()
-                    .count();
+            Map<UUID, Event> localEvents = findLocalEvents(eventIds);
+            long distinctSeedEventCount = eventIds.stream().distinct().count();
+            log.info("preference.seed.db.lookup.events requestId={} events={}",
+                    requestId, toEventLogEntries(eventIds, localEvents));
             log.info("preference.seed.db.lookup.end requestId={} distinctAiEventCount={} matchedLocalEventCount={} elapsedMs={}",
                     requestId, distinctSeedEventCount, localEvents.size(), elapsedMillis(dbStartedAt));
 
@@ -130,8 +131,12 @@ public class PreferenceService {
                     exception);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
         } catch (RestClientException | IllegalArgumentException exception) {
-            log.error("preference.seed.failed requestId={} elapsedMs={}",
-                    requestId, elapsedMillis(startedAt), exception);
+            log.error("preference.seed.failed requestId={} exceptionType={} rootCause={} elapsedMs={}",
+                    requestId,
+                    exception.getClass().getName(),
+                    rootCauseMessage(exception),
+                    elapsedMillis(startedAt),
+                    exception);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to load seed events.");
         } catch (RuntimeException exception) {
             log.error("preference.seed.failed requestId={} elapsedMs={}",
@@ -165,13 +170,8 @@ public class PreferenceService {
         }
     }
 
-    private Map<UUID, Event> findLocalEvents(List<SeedEvent> seedEvents) {
-        List<UUID> eventIds = seedEvents.stream()
-                .map(SeedEvent::eventId)
-                .distinct()
-                .toList();
-
-        return eventRepository.findAllById(eventIds).stream()
+    private Map<UUID, Event> findLocalEvents(List<UUID> eventIds) {
+        return eventRepository.findAllById(eventIds.stream().distinct().toList()).stream()
                 .collect(Collectors.toMap(
                         Event::getId,
                         Function.identity(),
@@ -179,13 +179,58 @@ public class PreferenceService {
                 ));
     }
 
+    private List<EventLogEntry> toEventLogEntries(List<UUID> eventIds, Map<UUID, Event> localEvents) {
+        return eventIds.stream()
+                .distinct()
+                .map(localEvents::get)
+                .filter(Objects::nonNull)
+                .map(event -> new EventLogEntry(event.getId(), event.getTitle()))
+                .toList();
+    }
+
     private PreferenceCategoriesResponse toPreferenceCategoriesResponse(SeedEvent seedEvent) {
         return new PreferenceCategoriesResponse(
-                seedEvent.eventId(),
+                UUID.fromString(seedEvent.eventId()),
                 seedEvent.title(),
                 seedEvent.genre(),
                 seedEvent.imageUrl()
         );
+    }
+
+    private List<UUID> toEventIds(List<SeedEvent> seedEvents, String requestId) {
+        List<String> invalidEventIds = seedEvents.stream()
+                .map(SeedEvent::eventId)
+                .filter(eventId -> !isUuid(eventId))
+                .toList();
+        if (!invalidEventIds.isEmpty()) {
+            log.error("preference.seed.ai.response.invalid-event-ids requestId={} invalidEventIds={}",
+                    requestId, invalidEventIds);
+            throw new IllegalArgumentException("AI seed event IDs must be UUIDs.");
+        }
+        return seedEvents.stream()
+                .map(SeedEvent::eventId)
+                .map(UUID::fromString)
+                .toList();
+    }
+
+    private boolean isUuid(String value) {
+        if (value == null) {
+            return false;
+        }
+        try {
+            UUID.fromString(value);
+            return true;
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
+    }
+
+    private String rootCauseMessage(Throwable throwable) {
+        Throwable rootCause = throwable;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+            rootCause = rootCause.getCause();
+        }
+        return rootCause.getClass().getName() + ": " + rootCause.getMessage();
     }
 
     private long elapsedMillis(long startedAt) {
@@ -212,10 +257,13 @@ public class PreferenceService {
     }
 
     private record SeedEvent(
-            @JsonProperty("event_id") UUID eventId,
+            @JsonProperty("event_id") String eventId,
             @JsonProperty("image_url") String imageUrl,
             String title,
             String genre
     ) {
+    }
+
+    private record EventLogEntry(UUID eventId, String title) {
     }
 }

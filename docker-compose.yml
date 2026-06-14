@@ -65,6 +65,7 @@ services:
     env_file:
       - ../arbit-ai/.env
     environment:
+      DATA_SOURCE: db
       APP_DB_URL: ${APP_DB_URL:-jdbc:mysql://arbit-db:3306/${MYSQL_DATABASE:-arbit}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
       APP_DB_USERNAME: ${APP_DB_USERNAME:-${MYSQL_USER:-arbit}}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:-${MYSQL_PASSWORD}}
