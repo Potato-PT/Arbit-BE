@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,8 @@ import org.springframework.stereotype.Service;
 @Service
 @ConditionalOnMissingBean(StorageService.class)
 public class LocalStorageService implements StorageService {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalStorageService.class);
 
     private final Path uploadRoot;
     private final String publicBasePath;
@@ -24,6 +28,9 @@ public class LocalStorageService implements StorageService {
 
     @Override
     public String upload(String objectName, InputStream inputStream, long contentLength, String contentType) {
+        long startedAt = System.nanoTime();
+        log.info("storage.local.upload.start objectName={} contentType={} contentLength={}",
+                objectName, contentType, contentLength);
         try {
             Path targetPath = uploadRoot.resolve(objectName).normalize();
             if (!targetPath.startsWith(uploadRoot)) {
@@ -31,9 +38,22 @@ public class LocalStorageService implements StorageService {
             }
             Files.createDirectories(targetPath.getParent());
             Files.copy(inputStream, targetPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-            return publicBasePath + "/" + objectName.replace("\\", "/");
+            String imageUrl = publicBasePath + "/" + objectName.replace("\\", "/");
+            log.info("storage.local.upload.complete objectName={} targetPath={} imageUrl={} elapsedMs={}",
+                    objectName, targetPath, imageUrl, elapsedMillis(startedAt));
+            return imageUrl;
         } catch (IOException exception) {
+            log.error("storage.local.upload.failed objectName={} exceptionType={} elapsedMs={}",
+                    objectName, exception.getClass().getName(), elapsedMillis(startedAt), exception);
             throw new IllegalStateException("Local file upload failed.", exception);
+        } catch (RuntimeException exception) {
+            log.error("storage.local.upload.failed objectName={} exceptionType={} elapsedMs={}",
+                    objectName, exception.getClass().getName(), elapsedMillis(startedAt), exception);
+            throw exception;
         }
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000;
     }
 }

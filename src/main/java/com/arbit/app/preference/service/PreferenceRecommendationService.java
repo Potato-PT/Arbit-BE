@@ -78,6 +78,9 @@ public class PreferenceRecommendationService {
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Failed to create recommendations.");
             }
 
+            log.info("AI recommendation response received. userId={}, recommendationCount={}",
+                    userId, response.recommendations().size());
+
             List<Recommendation> recommendations = toRecommendations(user, response.recommendations());
             if (recommendations.isEmpty()) {
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR, "No AI recommendations matched local events.");
