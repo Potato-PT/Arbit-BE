@@ -24,6 +24,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UserMeService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserMeService.class);
 
     private final UserRepository userRepository;
     private final BookmarkRepository bookmarkRepository;
@@ -79,25 +83,47 @@ public class UserMeService {
 
     @Transactional
     public UpdateProfileImageResponse updateProfileImage(UUID userId, MultipartFile profileImage) {
+        long startedAt = System.nanoTime();
+        log.info("profile.image.update.start userId={} originalFilename={} contentType={} contentLength={}",
+                userId,
+                profileImage == null ? null : profileImage.getOriginalFilename(),
+                profileImage == null ? null : profileImage.getContentType(),
+                profileImage == null ? null : profileImage.getSize());
+
         User user = getUser(userId);
         validateProfileImage(profileImage);
         StorageService storageService = storageServiceProvider.getIfAvailable();
         if (storageService == null) {
+            log.error("profile.image.update.storage-missing userId={}", userId);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Storage service is not configured.");
         }
+
+        log.info("profile.image.update.storage-selected userId={} storageService={} hadPreviousImage={}",
+                userId, storageService.getClass().getSimpleName(), user.getProfileImageUrl() != null);
+
+        String objectName = "users/%s/profile/%s".formatted(userId, buildStoredFileName(profileImage.getOriginalFilename()));
         try {
-            String objectName = "users/%s/profile/%s".formatted(userId, buildStoredFileName(profileImage.getOriginalFilename()));
+            log.info("profile.image.update.upload.start userId={} objectName={}", userId, objectName);
             String imageUrl = storageService.upload(
                     objectName,
                     profileImage.getInputStream(),
                     profileImage.getSize(),
                     profileImage.getContentType()
             );
+            log.info("profile.image.update.upload.end userId={} objectName={} imageUrl={}",
+                    userId, objectName, imageUrl);
+
             user.updateProfileImageUrl(imageUrl);
+            log.info("profile.image.update.complete userId={} imageUrl={} elapsedMs={}",
+                    userId, imageUrl, elapsedMillis(startedAt));
             return new UpdateProfileImageResponse(imageUrl);
         } catch (IOException exception) {
+            log.error("profile.image.update.failed userId={} objectName={} exceptionType={} elapsedMs={}",
+                    userId, objectName, exception.getClass().getName(), elapsedMillis(startedAt), exception);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Profile image upload failed.");
         } catch (IllegalStateException | IllegalArgumentException exception) {
+            log.error("profile.image.update.failed userId={} objectName={} exceptionType={} elapsedMs={}",
+                    userId, objectName, exception.getClass().getName(), elapsedMillis(startedAt), exception);
             throw new BusinessException(ErrorCode.INTERNAL_ERROR, "Profile image upload failed.");
         }
     }
@@ -180,6 +206,10 @@ public class UserMeService {
     private String buildStoredFileName(String originalFilename) {
         String safeName = originalFilename == null ? "profile-image" : originalFilename.replaceAll("[^A-Za-z0-9._-]", "_");
         return UUID.randomUUID() + "-" + safeName;
+    }
+
+    private long elapsedMillis(long startedAt) {
+        return (System.nanoTime() - startedAt) / 1_000_000;
     }
 
     private void updateAverageRating(Event event) {
